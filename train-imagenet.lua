@@ -7,7 +7,7 @@ require 'nngraph'
 require 'train-helpers'
 
 opt = lapp[[
-      --batchSize       (default 32)      Batch size
+      --batchSize       (default 96)     Batch size
       --nThreads        (default 4)       Data loader threads
       --dataRoot        (default /mnt/imagenet/train)   Data root folder
       --dataset_name    (default 'folder')
@@ -56,26 +56,26 @@ model = nn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
 ------> 64, 56,56
 model = addResidualLayer2(model, 64)
 model = nn.SpatialBatchNormalization(64)(model)
-model = addResidualLayer2(model, 64)
-model = nn.SpatialBatchNormalization(64)(model)
+--model = addResidualLayer2(model, 64)
+--model = nn.SpatialBatchNormalization(64)(model)
 model = nn.ReLU(true)(nn.SpatialConvolution(64, 128, 3,3, 2,2, 1,1)(model))
 ------> 128, 28,28
 model = addResidualLayer2(model, 128)
 model = nn.SpatialBatchNormalization(128)(model)
-model = addResidualLayer2(model, 128)
-model = nn.SpatialBatchNormalization(128)(model)
+--model = addResidualLayer2(model, 128)
+--model = nn.SpatialBatchNormalization(128)(model)
 model = nn.ReLU(true)(nn.SpatialConvolution(128, 256, 3,3, 2,2, 1,1)(model))
 ------> 256, 14,14
 model = addResidualLayer2(model, 256)
 model = nn.SpatialBatchNormalization(256)(model)
-model = addResidualLayer2(model, 256)
-model = nn.SpatialBatchNormalization(256)(model)
+--model = addResidualLayer2(model, 256)
+--model = nn.SpatialBatchNormalization(256)(model)
 model = nn.ReLU(true)(nn.SpatialConvolution(256, 512, 3,3, 2,2, 1,1)(model))
 ------> 512, 7,7
 model = addResidualLayer2(model, 512)
 model = nn.SpatialBatchNormalization(512)(model)
-model = addResidualLayer2(model, 512)
-model = nn.SpatialBatchNormalization(512)(model)
+--model = addResidualLayer2(model, 512)
+--model = nn.SpatialBatchNormalization(512)(model)
 model = nn.ReLU(true)(nn.SpatialConvolution(512, 1000, 7,7)(model))
 ------> 1000, 1,1
 model = nn.Reshape(1000)(model)
@@ -88,70 +88,108 @@ loss = nn.ClassNLLCriterion()
 model:cuda()
 loss:cuda()
 
+--[[
+model:apply(function(m)
+    -- Initialize weights
+    local name = torch.type(m)
+    if name:find('Convolution') then
+        m.weight:normal(0.0, math.sqrt(2/(m.nInputPlane*m.kW*m.kH)))
+        print(m.weight:std())
+        m.bias:fill(0)
+    elseif name:find('BatchNormalization') then
+        if m.weight then m.weight:normal(1.0, 0.002) end
+        if m.bias then m.bias:fill(0) end
+    end
+end)
+--]]
 
-print(#model:forward(torch.randn(10, 3, 224,224)))
+
+
+--[[
+-- Show memory usage
+print(#model:forward(torch.randn(64, 3, 224,224):cuda()))
 inspectMemory(model)
 mem_usage = {}
 for i,module in ipairs(model.modules) do
    accumMemoryByFieldName(module, mem_usage)
 end
 print(mem_usage)
+--]]
 
 
--- sgdState = {
---    learningRate = 0.01,
---    --momentum     = 0.9,
---    --dampening    = 0,
---    --weightDecay  = 0.0005,
---    --nesterov     = true,
---    whichOptimMethod = 'rmsprop',
---    epochDropCount = 20,
---
---    -- Train stuff
---    options = opt,
---    accuracies = {},
--- }
---
--- -- Actual Training! -----------------------------
--- weights, gradients = model:getParameters()
--- function forwardBackwardBatch(batch)
---    model:training()
---    gradients:zero()
---    local inputs = batch[1]
---    local labels = batch[2]
---    local y = model:forward(inputs)
---    local loss_val = loss:forward(y, labels)
---    local df_dw = loss:backward(y, labels)
---    model:backward(inputs, df_dw)
---    return loss_val, gradients
--- end
---
---
--- function evalModel()
---    print("No evaluation...")
---    -- if sgdState.epochCounter > 10 then os.exit(1) end
---    -- model:evaluate()
---    -- local batch = dataset_test:sample(10000)
---    -- local output = model:forward(batch.inputs)
---    -- local _, indices = torch.sort(output, 2, true)
---    -- -- indices has shape (batchSize, nClasses)
---    -- local top1 = indices:select(2, 1)
---    -- local acc = (top1:eq(batch.outputs:long()):sum() / top1:size(1))
---    -- print("\n\nAccuracy: ", acc)
---    -- table.insert(sgdState.accuracies, acc)
--- end
---
---
--- TrainingHelpers.trainForever(
---    model,
---    forwardBackwardBatch,
---    weights,
---    sgdState,
---    function()
---       inputs,labels = data:getBatch()
---       return {inputs,labels}
---    end,
---    dataset_train:size(),
---    evalModel,
---    "snapshots/residual-mnist"
--- )
+sgdState = {
+   learningRate = 0.01,
+   momentum     = 0.9,
+   dampening    = 0,
+   weightDecay    = 1e-6,
+   nesterov     = true,
+   --rho              = 0.5,
+   --whichOptimMethod = 'rmsprop',
+   epochDropCount = 20,
+
+   -- Train stuff
+   options = opt,
+   accuracies = {},
+}
+
+-- Actual Training! -----------------------------
+weights, gradients = model:getParameters()
+function forwardBackwardBatch(batch)
+   model:training()
+   gradients:zero()
+   local inputs = batch[1]:cuda()
+   local labels = batch[2]:cuda()
+   local y = model:forward(inputs)
+   local loss_val = loss:forward(y, labels)
+   local df_dw = loss:backward(y, labels)
+   model:backward(inputs, df_dw)
+
+
+   -- Display results
+   local display = require 'display'
+   local res = {}
+   for _,l in ipairs(sgdState.lossLog) do
+       res[#res+1] = {l.nSampledImages, l.loss}
+   end
+   display.plot(res, {labels={'nSampled', 'loss'},
+                      title='loss',
+                      rollPeriod=10,
+                      win=25})
+
+   display.image(model.modules[2].weight, {win=26})
+
+
+   return loss_val, gradients
+end
+
+
+function evalModel()
+   print("No evaluation...")
+   -- if sgdState.epochCounter > 10 then os.exit(1) end
+   -- model:evaluate()
+   -- local batch = dataset_test:sample(10000)
+   -- local output = model:forward(batch.inputs)
+   -- local _, indices = torch.sort(output, 2, true)
+   -- -- indices has shape (batchSize, nClasses)
+   -- local top1 = indices:select(2, 1)
+   -- local acc = (top1:eq(batch.outputs:long()):sum() / top1:size(1))
+   -- print("\n\nAccuracy: ", acc)
+   -- table.insert(sgdState.accuracies, acc)
+end
+
+
+-- --[[
+TrainingHelpers.trainForever(
+   model,
+   forwardBackwardBatch,
+   weights,
+   sgdState,
+   function()
+      inputs,labels = data:getBatch()
+      return {inputs,labels}
+   end,
+   data:size(),
+   evalModel,
+   "snapshots/imagenet-residual-experiment1"
+)
+--]]

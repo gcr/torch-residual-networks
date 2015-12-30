@@ -68,14 +68,22 @@ function accumMemoryByFieldName(module, accum)
       end
    end
 end
---
---
---
---
--- input = nn.Identity()()
--- output = addResidualLayer(input, 256,64,256)
--- net = nn.gModule({input},{output})
---
+
+--[[
+-- Testing
+input = nn.Identity()()
+output = addResidualLayer2(input, 3)
+net = nn.gModule({input},{output})
+
+i = torch.randn(1, 3, 5,5):fill(1):cuda()
+net:cuda()
+
+net.modules[2].bias:fill(0)
+net.modules[4].bias:fill(0)
+net.modules[2].weight:fill(0)
+net.modules[4].weight:fill(0)
+--]]
+
 -- -- Let's make some!
 -- i = torch.randn(5, 256, 224,224)
 -- o = net:forward(i)

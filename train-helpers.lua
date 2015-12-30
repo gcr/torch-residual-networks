@@ -101,11 +101,12 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
                        weights,
                        sgdState)
       -- Display progress and loss
-      sgdState.nSampledImages = sgdState.nSampledImages + batch.inputs:size(1)
+      sgdState.nSampledImages = sgdState.nSampledImages + batch[1]:size(1)
       sgdState.nEvalCounter = sgdState.nEvalCounter + 1
       xlua.progress(sgdState.nSampledImages%epochSize, epochSize)
-      if sgdState.nEvalCounter % 20 == 0 then
+      if sgdState.nEvalCounter % 1 == 0 then
           print("\027[KLoss:", loss_val)
+          print("Gradients:", gradients:norm())
       end
       -- if sgdState.nEvalCounter % 100 == 0 then
       --     local inspection = TrainingHelpers.inspectModel(model)
