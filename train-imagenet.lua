@@ -88,6 +88,16 @@ loss = nn.ClassNLLCriterion()
 model:cuda()
 loss:cuda()
 
+
+print(#model:forward(torch.randn(10, 3, 224,224)))
+inspectMemory(model)
+mem_usage = {}
+for i,module in ipairs(model.modules) do
+   accumMemoryByFieldName(module, mem_usage)
+end
+print(mem_usage)
+
+
 -- sgdState = {
 --    learningRate = 0.01,
 --    --momentum     = 0.9,
