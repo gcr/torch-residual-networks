@@ -1,21 +1,22 @@
 require 'nn'
 require 'nngraph'
+require 'cudnn'
 
 function addResidualLayer(input,  inChannels, hiddenChannels, outChannels)
    -- Downsampling and convolution path
-   local net = nn.SpatialConvolution(inChannels, hiddenChannels,
+   local net = cudnn.SpatialConvolution(inChannels, hiddenChannels,
                                            1,1)(input)
-   net = nn.ReLU(true)(net)
-   net = nn.SpatialConvolution(hiddenChannels, hiddenChannels,
+   net = cudnn.ReLU(true)(net)
+   net = cudnn.SpatialConvolution(hiddenChannels, hiddenChannels,
                                       3,3, 1,1, 1,1)(net)
    --net = nn.Narrow
-   net = nn.ReLU(true)(net)
-   net = nn.SpatialConvolution(hiddenChannels, outChannels,
+   net = cudnn.ReLU(true)(net)
+   net = cudnn.SpatialConvolution(hiddenChannels, outChannels,
                                            1,1)(net)
 
    -- Add them together
    --return net
-   return nn.CAddTable(){net, input}
+   return cudnn.CAddTable(){net, input}
 end
 
 -- input = nn.Identity()()

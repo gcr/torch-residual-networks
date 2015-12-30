@@ -43,33 +43,30 @@ print("Dataset size: ", data:size())
 -- -- -- model:add(nn.Linear(200, 10))
 -- -- model:add(nn.LogSoftMax())
 
--- -- Residual network
--- input = nn.Identity()()
--- model = addResidualLayer(input, 1, 8, 8)
--- model = nn.SpatialBatchNormalization(8)(model)
+-- Residual network
+input = nn.Identity()()
+model = addResidualLayer(input, 1, 8, 8)
+model = nn.SpatialBatchNormalization(8)(model)
+model = addResidualLayer(model, 8, 4, 8)
+model = nn.SpatialBatchNormalization(8)(model)
+model = addResidualLayer(model, 8, 4, 8)
+model = nn.SpatialBatchNormalization(8)(model)
+model = addResidualLayer(model, 8, 16, 32)
+model = nn.SpatialBatchNormalization(32)(model)
 -- model = addResidualLayer(model, 8, 4, 8)
--- model = nn.SpatialBatchNormalization(8)(model)
 -- model = addResidualLayer(model, 8, 4, 8)
--- model = nn.SpatialBatchNormalization(8)(model)
--- model = addResidualLayer(model, 8, 16, 32)
--- model = nn.SpatialBatchNormalization(32)(model)
--- -- model = addResidualLayer(model, 8, 4, 8)
--- -- model = addResidualLayer(model, 8, 4, 8)
--- -- model = addResidualLayer(model, 8, 4, 8)
--- model = addResidualLayer(model, 32, 4, 10)
--- model = nn.SpatialAveragePooling(28,28)(model)
--- model = nn.Reshape(10)(model)
--- model = nn.LogSoftMax()(model)
+-- model = addResidualLayer(model, 8, 4, 8)
+model = addResidualLayer(model, 32, 4, 10)
+model = nn.SpatialAveragePooling(28,28)(model)
+model = nn.Reshape(10)(model)
+model = nn.LogSoftMax()(model)
 
--- model = nn.gModule({input}, {model})
+model = nn.gModule({input}, {model})
 
--- loss = nn.ClassNLLCriterion()
--- model:float()
--- loss:float()
+loss = nn.ClassNLLCriterion()
+model:cuda()
+loss:cuda()
 
-
-
--- -- Grid search
 -- sgdState = {
 --    learningRate = 0.01,
 --    --momentum     = 0.9,
@@ -78,47 +75,50 @@ print("Dataset size: ", data:size())
 --    --nesterov     = true,
 --    whichOptimMethod = 'rmsprop',
 --    epochDropCount = 20,
-
+--
 --    -- Train stuff
 --    options = opt,
 --    accuracies = {},
 -- }
-
+--
 -- -- Actual Training! -----------------------------
 -- weights, gradients = model:getParameters()
 -- function forwardBackwardBatch(batch)
 --    model:training()
 --    gradients:zero()
---    local y = model:forward(batch.inputs)
---    local loss_val = loss:forward(y, batch.outputs)
---    local df_dw = loss:backward(y, batch.outputs)
---    model:backward(batch.inputs, df_dw)
+--    local inputs = batch[1]
+--    local labels = batch[2]
+--    local y = model:forward(inputs)
+--    local loss_val = loss:forward(y, labels)
+--    local df_dw = loss:backward(y, labels)
+--    model:backward(inputs, df_dw)
 --    return loss_val, gradients
 -- end
-
-
+--
+--
 -- function evalModel()
---    if sgdState.epochCounter > 10 then os.exit(1) end
---    model:evaluate()
---    local batch = dataset_test:sample(10000)
---    local output = model:forward(batch.inputs)
---    local _, indices = torch.sort(output, 2, true)
---    -- indices has shape (batchSize, nClasses)
---    local top1 = indices:select(2, 1)
---    local acc = (top1:eq(batch.outputs:long()):sum() / top1:size(1))
---    print("\n\nAccuracy: ", acc)
---    table.insert(sgdState.accuracies, acc)
+--    print("No evaluation...")
+--    -- if sgdState.epochCounter > 10 then os.exit(1) end
+--    -- model:evaluate()
+--    -- local batch = dataset_test:sample(10000)
+--    -- local output = model:forward(batch.inputs)
+--    -- local _, indices = torch.sort(output, 2, true)
+--    -- -- indices has shape (batchSize, nClasses)
+--    -- local top1 = indices:select(2, 1)
+--    -- local acc = (top1:eq(batch.outputs:long()):sum() / top1:size(1))
+--    -- print("\n\nAccuracy: ", acc)
+--    -- table.insert(sgdState.accuracies, acc)
 -- end
-
-
+--
+--
 -- TrainingHelpers.trainForever(
 --    model,
 --    forwardBackwardBatch,
 --    weights,
 --    sgdState,
 --    function()
---       g_batch = dataset_train:sample(g_batch, opt.batchSize)
---       return g_batch
+--       inputs,labels = data:getBatch()
+--       return {inputs,labels}
 --    end,
 --    dataset_train:size(),
 --    evalModel,
