@@ -5,6 +5,7 @@ require 'cunn'
 require 'cudnn'
 require 'nngraph'
 require 'train-helpers'
+display = require 'display'
 
 opt = lapp[[
       --batchSize       (default 96)     Batch size
@@ -144,20 +145,7 @@ function forwardBackwardBatch(batch)
    local df_dw = loss:backward(y, labels)
    model:backward(inputs, df_dw)
 
-
-   -- Display results
-   local display = require 'display'
-   local res = {}
-   for _,l in ipairs(sgdState.lossLog) do
-       res[#res+1] = {l.nSampledImages, l.loss}
-   end
-   display.plot(res, {labels={'nSampled', 'loss'},
-                      title='loss',
-                      rollPeriod=10,
-                      win=25})
-
-   display.image(model.modules[2].weight, {win=26})
-
+   display.image(model.modules[2].weight, {win=24, title="First layer weights"})
 
    return loss_val, gradients
 end

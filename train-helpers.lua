@@ -1,5 +1,6 @@
 require 'optim'
 TrainingHelpers = {}
+local display = require 'display'
 
 function TrainingHelpers.inspectLayer(layer, fields)
    function inspect(x)
@@ -65,6 +66,54 @@ function TrainingHelpers.printInspection(inspection)
 end
 
 
+function recordLoss(sgdState, loss_val)
+   sgdState.lossLog = sgdState.lossLog or {}
+   sgdState.lossLog[#sgdState.lossLog + 1] = {
+      sgdState.nSampledImages,
+      loss_val
+   }
+end
+function displayLoss(sgdState, loss_val)
+   display.plot(sgdState.lossLog, {labels={'Images Seen', 'Loss'},
+                      title='Loss',
+                      rollPeriod=10,
+                      win=25})
+end
+function recordGradients(sgdState, model)
+   sgdState.gradientLog = sgdState.gradientLog or {}
+   local nextEntry = {}
+   local labels = {}
+   sgdState.gradientLog.labels = labels
+   sgdState.gradientLog[#sgdState.gradientLog + 1] = nextEntry
+   for i,li in ipairs(model.modules) do
+      if (string.find(tostring(li.name), "ReLU")
+       or string.find(tostring(li.name), "BatchNorm")
+       or string.find(tostring(li.name), "View")
+       ) then
+       -- Do not print these layers
+      else
+         if li.weight then
+            nextEntry[#nextEntry+1] = li.weight:var()
+            labels[#labels+1] = tostring(i)..":w-v"
+         end
+         if li.gradWeight then
+            nextEntry[#nextEntry+1] = li.gradWeight:var()
+            labels[#labels+1] = tostring(i)..":gw-v"
+         end
+      end
+   end
+end
+function displayGradients(sgdState, model)
+   display.plot(sgdState.gradientLog, {
+                   labels=sgdState.gradientLog.labels,
+                   title='Babysitting',
+                   rollPeriod=10,
+                   win=26,
+             })
+end
+
+
+
 function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, sampler, epochSize, afterEpoch, filename)
    local modelTag = torch.random()
    sgdState.epochSize = epochSize
@@ -76,12 +125,6 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
    end
    if sgdState.nEvalCounter == nil then
       sgdState.nEvalCounter = 0
-   end
-   if sgdState.lossLog == nil then
-       sgdState.lossLog = {}
-   end
-   if sgdState.inspectionLog == nil then
-       sgdState.inspectionLog = {}
    end
    local whichOptimMethod = optim.sgd
    if sgdState.whichOptimMethod then
@@ -104,16 +147,22 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
       sgdState.nSampledImages = sgdState.nSampledImages + batch[1]:size(1)
       sgdState.nEvalCounter = sgdState.nEvalCounter + 1
       xlua.progress(sgdState.nSampledImages%epochSize, epochSize)
-      if sgdState.nEvalCounter % 1 == 0 then
-          print("\027[KLoss:", loss_val)
-          print("Gradients:", gradients:norm())
-      end
+
+      recordLoss(sgdState, loss_val)
+      displayLoss(sgdState, loss_val)
+      recordGradients(sgdState, model)
+      displayGradients(sgdState, model)
+
+      -- if sgdState.nEvalCounter % 1 == 0 then
+      --     print("\027[KLoss:", loss_val)
+      --     print("Gradients:", gradients:norm())
+      -- end
       -- if sgdState.nEvalCounter % 100 == 0 then
       --     local inspection = TrainingHelpers.inspectModel(model)
       --     inspection.nSampledImages = sgdState.nSampledImages
       --     table.insert(sgdState.inspectionLog, inspection)
       -- end
-      table.insert(sgdState.lossLog, {loss = loss_val, nSampledImages = sgdState.nSampledImages})
+      --table.insert(sgdState.lossLog, {loss = loss_val, nSampledImages = sgdState.nSampledImages})
       if math.floor(sgdState.nSampledImages / epochSize) ~= sgdState.epochCounter then
          -- Epoch completed!
          sgdState.epochCounter = math.floor(sgdState.nSampledImages / epochSize)
