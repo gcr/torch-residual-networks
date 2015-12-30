@@ -1,19 +1,23 @@
-require 'residual-layers.lua'
+require 'residual-layers'
 require 'nn'
 require 'nngraph'
-require 'mnist-dataset.lua'
-require 'train-helpers.lua'
+require 'train-helpers'
 
 opt = lapp[[
       --batchSize       (default 32)      Batch size
       --nThreads        (default 4)       Data loader threads
       --dataRoot        (default /mnt/imagenet/train)   Data root folder
+      --dataset_name    (default 'folder')
+      --verbose         (default true)
+      --loadSize        (default 256)     Size of image when loading
+      --fineSize        (default 224)     Size of image crop
 ]]
+print(opt)
 
 -- create data loader
 local DataLoader = paths.dofile('data.lua')
-local data = DataLoader.new(opt.nThreads, opt.dataset, opt)
-print("Dataset: " .. opt.dataset, " Size: ", data:size())
+data = DataLoader.new(opt.nThreads, 'folder', opt)
+print("Dataset size: ", data:size())
 
 
 -- dataset_train = Dataset.MNIST("mnist.hdf5", 'train')

@@ -58,7 +58,7 @@ local initcheck = argcheck{
    {name="verbose",
     type="boolean",
     help="Verbose mode during initialization",
-    default = false},
+    default = true},
 
    {name="loadSize",
     type="table",

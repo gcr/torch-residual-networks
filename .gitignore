@@ -1,2 +1,4 @@
 snapshots
 mnist.hdf5
+*.swp
+cache

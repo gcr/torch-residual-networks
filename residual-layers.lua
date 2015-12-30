@@ -18,10 +18,10 @@ function addResidualLayer(input,  inChannels, hiddenChannels, outChannels)
    return nn.CAddTable(){net, input}
 end
 
-input = nn.Identity()()
-net = addResidualLayer(input, 256,64,256)
-net = nn.gModule({input}, {net})
-graph.dot(net.fg, "MLP")
+-- input = nn.Identity()()
+-- net = addResidualLayer(input, 256,64,256)
+-- net = nn.gModule({input}, {net})
+-- graph.dot(net.fg, "MLP")
 
 
 -- function countElts(modules)
