@@ -1,5 +1,8 @@
 require 'residual-layers'
 require 'nn'
+require 'cutorch'
+require 'cunn'
+require 'cudnn'
 require 'nngraph'
 require 'train-helpers'
 
@@ -43,22 +46,40 @@ print("Dataset size: ", data:size())
 -- -- -- model:add(nn.Linear(200, 10))
 -- -- model:add(nn.LogSoftMax())
 
--- Residual network
+-- Residual network.
+-- Input: 3x224x224
 input = nn.Identity()()
-model = addResidualLayer(input, 1, 8, 8)
-model = nn.SpatialBatchNormalization(8)(model)
-model = addResidualLayer(model, 8, 4, 8)
-model = nn.SpatialBatchNormalization(8)(model)
-model = addResidualLayer(model, 8, 4, 8)
-model = nn.SpatialBatchNormalization(8)(model)
-model = addResidualLayer(model, 8, 16, 32)
-model = nn.SpatialBatchNormalization(32)(model)
--- model = addResidualLayer(model, 8, 4, 8)
--- model = addResidualLayer(model, 8, 4, 8)
--- model = addResidualLayer(model, 8, 4, 8)
-model = addResidualLayer(model, 32, 4, 10)
-model = nn.SpatialAveragePooling(28,28)(model)
-model = nn.Reshape(10)(model)
+model = nn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(model)
+------> 64, 112,112
+model = nn.ReLU(true)(model)
+model = nn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
+------> 64, 56,56
+model = addResidualLayer2(model, 64)
+model = nn.SpatialBatchNormalization(64)(model)
+model = addResidualLayer2(model, 64)
+model = nn.SpatialBatchNormalization(64)(model)
+model = nn.ReLU(true)(nn.SpatialConvolution(64, 128, 3,3, 2,2, 1,1)(model))
+------> 128, 28,28
+model = addResidualLayer2(model, 128)
+model = nn.SpatialBatchNormalization(128)(model)
+model = addResidualLayer2(model, 128)
+model = nn.SpatialBatchNormalization(128)(model)
+model = nn.ReLU(true)(nn.SpatialConvolution(128, 256, 3,3, 2,2, 1,1)(model))
+------> 256, 14,14
+model = addResidualLayer2(model, 256)
+model = nn.SpatialBatchNormalization(256)(model)
+model = addResidualLayer2(model, 256)
+model = nn.SpatialBatchNormalization(256)(model)
+model = nn.ReLU(true)(nn.SpatialConvolution(256, 512, 3,3, 2,2, 1,1)(model))
+------> 512, 7,7
+model = addResidualLayer2(model, 512)
+model = nn.SpatialBatchNormalization(512)(model)
+model = addResidualLayer2(model, 512)
+model = nn.SpatialBatchNormalization(512)(model)
+model = nn.ReLU(true)(nn.SpatialConvolution(512, 1000, 7,7)(model))
+------> 1000, 1,1
+model = nn.Reshape(1000)(model)
+------> 1000
 model = nn.LogSoftMax()(model)
 
 model = nn.gModule({input}, {model})
