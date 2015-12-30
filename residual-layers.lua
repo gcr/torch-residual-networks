@@ -11,7 +11,7 @@ function addResidualLayer2(input,  nChannels)
                                       3,3, 1,1, 1,1)(net)
    -- Add them together
    --return net
-   return cudnn.CAddTable(){net, input}
+   return nn.CAddTable(){net, input}
 end
 
 
@@ -29,7 +29,7 @@ function addResidualLayer3(input,  inChannels, hiddenChannels, outChannels)
 
    -- Add them together
    --return net
-   return cudnn.CAddTable(){net, input}
+   return nn.CAddTable(){net, input}
 end
 
 -- input = nn.Identity()()
