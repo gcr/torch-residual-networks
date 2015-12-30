@@ -49,7 +49,7 @@ print("Dataset size: ", data:size())
 -- Residual network.
 -- Input: 3x224x224
 input = nn.Identity()()
-model = nn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(model)
+model = nn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
 ------> 64, 112,112
 model = nn.ReLU(true)(model)
 model = nn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
