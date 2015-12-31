@@ -50,34 +50,34 @@ print("Dataset size: ", data:size())
 -- Residual network.
 -- Input: 3x224x224
 input = nn.Identity()()
-model = nn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
+model = cudnn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
 ------> 64, 112,112
-model = nn.ReLU(true)(model)
-model = nn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
+model = cudnn.ReLU(true)(model)
+model = cudnn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
 ------> 64, 56,56
 model = addResidualLayer2(model, 64)
 model = nn.SpatialBatchNormalization(64)(model)
 --model = addResidualLayer2(model, 64)
 --model = nn.SpatialBatchNormalization(64)(model)
-model = nn.ReLU(true)(nn.SpatialConvolution(64, 128, 3,3, 2,2, 1,1)(model))
+model = cudnn.ReLU(true)(cudnn.SpatialConvolution(64, 128, 3,3, 2,2, 1,1)(model))
 ------> 128, 28,28
 model = addResidualLayer2(model, 128)
 model = nn.SpatialBatchNormalization(128)(model)
 --model = addResidualLayer2(model, 128)
 --model = nn.SpatialBatchNormalization(128)(model)
-model = nn.ReLU(true)(nn.SpatialConvolution(128, 256, 3,3, 2,2, 1,1)(model))
+model = cudnn.ReLU(true)(cudnn.SpatialConvolution(128, 256, 3,3, 2,2, 1,1)(model))
 ------> 256, 14,14
 model = addResidualLayer2(model, 256)
 model = nn.SpatialBatchNormalization(256)(model)
 --model = addResidualLayer2(model, 256)
 --model = nn.SpatialBatchNormalization(256)(model)
-model = nn.ReLU(true)(nn.SpatialConvolution(256, 512, 3,3, 2,2, 1,1)(model))
+model = cudnn.ReLU(true)(cudnn.SpatialConvolution(256, 512, 3,3, 2,2, 1,1)(model))
 ------> 512, 7,7
 model = addResidualLayer2(model, 512)
 model = nn.SpatialBatchNormalization(512)(model)
 --model = addResidualLayer2(model, 512)
 --model = nn.SpatialBatchNormalization(512)(model)
-model = nn.ReLU(true)(nn.SpatialConvolution(512, 1000, 7,7)(model))
+model = cudnn.ReLU(true)(cudnn.SpatialConvolution(512, 1000, 7,7)(model))
 ------> 1000, 1,1
 model = nn.Reshape(1000)(model)
 ------> 1000
@@ -88,6 +88,10 @@ model = nn.gModule({input}, {model})
 loss = nn.ClassNLLCriterion()
 model:cuda()
 loss:cuda()
+
+
+-- DIRTY TRICK to use :)
+--model.modules[2].weight:mul(0.1)
 
 --[[
 model:apply(function(m)

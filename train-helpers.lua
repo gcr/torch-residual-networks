@@ -83,8 +83,10 @@ function recordGradients(sgdState, model)
    sgdState.gradientLog = sgdState.gradientLog or {}
    local nextEntry = {}
    local labels = {}
-   sgdState.gradientLog.labels = labels
+   sgdState.gradientLogLabels = labels
    sgdState.gradientLog[#sgdState.gradientLog + 1] = nextEntry
+   nextEntry[1] = sgdState.nSampledImages
+   labels[1] = "Seen Images"
    for i,li in ipairs(model.modules) do
       if (string.find(tostring(li.name), "ReLU")
        or string.find(tostring(li.name), "BatchNorm")
@@ -92,20 +94,19 @@ function recordGradients(sgdState, model)
        ) then
        -- Do not print these layers
       else
-         if li.weight then
-            nextEntry[#nextEntry+1] = li.weight:var()
-            labels[#labels+1] = tostring(i)..":w-v"
-         end
          if li.gradWeight then
-            nextEntry[#nextEntry+1] = li.gradWeight:var()
-            labels[#labels+1] = tostring(i)..":gw-v"
+            nextEntry[#nextEntry+1] = {li.gradWeight:mean()-li.gradWeight:var(),
+                                       li.gradWeight:mean(),
+                                       li.gradWeight:mean()+li.gradWeight:var()}
+            labels[#labels+1] = tostring(i)..":g"
          end
       end
    end
 end
 function displayGradients(sgdState, model)
    display.plot(sgdState.gradientLog, {
-                   labels=sgdState.gradientLog.labels,
+                   labels=sgdState.gradientLogLabels,
+                   customBars=true, errorBars=true,
                    title='Babysitting',
                    rollPeriod=10,
                    win=26,
@@ -149,14 +150,13 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
       xlua.progress(sgdState.nSampledImages%epochSize, epochSize)
 
       recordLoss(sgdState, loss_val)
-      displayLoss(sgdState, loss_val)
       recordGradients(sgdState, model)
-      displayGradients(sgdState, model)
-
-      -- if sgdState.nEvalCounter % 1 == 0 then
+      if sgdState.nEvalCounter % 20 == 0 then
+          displayLoss(sgdState, loss_val)
+          displayGradients(sgdState, model)
       --     print("\027[KLoss:", loss_val)
       --     print("Gradients:", gradients:norm())
-      -- end
+      end
       -- if sgdState.nEvalCounter % 100 == 0 then
       --     local inspection = TrainingHelpers.inspectModel(model)
       --     inspection.nSampledImages = sgdState.nSampledImages
