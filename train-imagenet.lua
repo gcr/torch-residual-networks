@@ -10,8 +10,8 @@ display = require 'display'
 opt = lapp[[
       --batchSize       (default 96)     Batch size
       --nThreads        (default 4)       Data loader threads
-      --dataRoot        (default /mnt/imagenet/train)   Data root folder
-      --dataset_name    (default 'folder')
+      --dataTrainRoot   (default /mnt/imagenet/train)   Data root folder
+      --dataValRoot     (default /mnt/imagenet/val)   Data root folder
       --verbose         (default true)
       --loadSize        (default 256)     Size of image when loading
       --fineSize        (default 224)     Size of image crop
@@ -20,8 +20,13 @@ print(opt)
 
 -- create data loader
 local DataLoader = paths.dofile('data.lua')
-data = DataLoader.new(opt.nThreads, 'folder', opt)
-print("Dataset size: ", data:size())
+dataTrain = DataLoader.new(opt.nThreads, 'folder', {dataRoot: opt.dataTrainRoot,
+                                                    fineSize: opt.fineSize,
+                                                    loadSize: opt.loadSize})
+dataVal = DataLoader.new(opt.nThreads, 'folder', {dataRoot: opt.dataValRoot,
+                                                  fineSize: opt.fineSize,
+                                                  loadSize: opt.loadSize})
+print("Dataset size: ", dataTrain:size())
 
 
 -- dataset_train = Dataset.MNIST("mnist.hdf5", 'train')
@@ -177,10 +182,10 @@ TrainingHelpers.trainForever(
    weights,
    sgdState,
    function()
-      inputs,labels = data:getBatch()
+      inputs,labels = dataTrain:getBatch()
       return {inputs,labels}
    end,
-   data:size(),
+   dataTrain:size(),
    evalModel,
    "snapshots/imagenet-residual-experiment1"
 )
