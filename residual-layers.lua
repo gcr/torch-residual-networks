@@ -82,7 +82,7 @@ function accumMemoryByFieldName(module, accum)
 end
 --]]
 
--- --[[
+--[[
 -- Testing
 input = nn.Identity()()
 output = addResidualLayer2(input, 3, 6,  2)

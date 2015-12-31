@@ -8,7 +8,7 @@ require 'train-helpers'
 display = require 'display'
 
 opt = lapp[[
-      --batchSize       (default 96)     Batch size
+      --batchSize       (default 64)     Batch size
       --nThreads        (default 4)       Data loader threads
       --dataTrainRoot   (default /mnt/imagenet/train)   Data root folder
       --dataValRoot     (default /mnt/imagenet/val)   Data root folder
@@ -68,19 +68,19 @@ model = addResidualLayer2(model, 64)
 model = nn.SpatialBatchNormalization(64)(model)
 --model = addResidualLayer2(model, 64)
 --model = nn.SpatialBatchNormalization(64)(model)
-model = cudnn.ReLU(true)(cudnn.SpatialConvolution(64, 128, 3,3, 2,2, 1,1)(model))
+model = addResidualLayer2(model, 64, 128, 2)
 ------> 128, 28,28
 model = addResidualLayer2(model, 128)
 model = nn.SpatialBatchNormalization(128)(model)
 --model = addResidualLayer2(model, 128)
 --model = nn.SpatialBatchNormalization(128)(model)
-model = cudnn.ReLU(true)(cudnn.SpatialConvolution(128, 256, 3,3, 2,2, 1,1)(model))
+model = addResidualLayer2(model, 128, 256, 2)
 ------> 256, 14,14
 model = addResidualLayer2(model, 256)
 model = nn.SpatialBatchNormalization(256)(model)
 --model = addResidualLayer2(model, 256)
 --model = nn.SpatialBatchNormalization(256)(model)
-model = cudnn.ReLU(true)(cudnn.SpatialConvolution(256, 512, 3,3, 2,2, 1,1)(model))
+model = addResidualLayer2(model, 256, 512, 2)
 ------> 512, 7,7
 model = addResidualLayer2(model, 512)
 model = nn.SpatialBatchNormalization(512)(model)
@@ -172,11 +172,20 @@ function evalModel()
    table.insert(sgdState.accuracies, acc)
 end
 
+--[[
 local results = evaluateModel(model, dataVal)
 print(results)
+--]]
+
+---[[
+require 'graph'
+graph.dot(model.fg, 'MLP', '/tmp/MLP')
+os.execute('convert /tmp/MLP.svg /tmp/MLP.png')
+display.image(image.load('/tmp/MLP.png'), {title="Network Structure", win=23})
+--]]
 
 
--- --[[
+---[[
 TrainingHelpers.trainForever(
    model,
    forwardBackwardBatch,
@@ -186,7 +195,7 @@ TrainingHelpers.trainForever(
       inputs,labels = dataTrain:getBatch()
       return {inputs,labels}
    end,
-   0.005 * dataTrain:size(),
+   dataTrain:size(),
    evalModel,
    "snapshots/imagenet-residual-experiment1"
 )
