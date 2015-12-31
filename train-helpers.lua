@@ -123,6 +123,26 @@ function displayWeights(model)
 end
 
 
+function evaluateModel(model, datasetTest, epochSize)
+   print("Evaluating...")
+   model:evaluate()
+   local correct1 = 0
+   local correct5 = 0
+   local total = 0
+   while total < datasetTest:size() do
+       local batch, labels = datasetTest:getBatch()
+       local y = model:forward(batch:cuda()):float()
+       local _, indices = torch.sort(y, 2, true)
+       -- indices has shape (batchSize, nClasses)
+       local top1 = indices:select(2, 1)
+       local top5 = indices:narrow(2, 1,5)
+       correct1 = correct1 + torch.eq(top1, labels):sum()
+       correct5 = correct5 + torch.eq(top5, labels:view(-1, 1):expandAs(top5)):sum()
+       total = total + indices:size(1)
+       xlua.progress(total, datasetTest:size())
+   end
+   return {correct1=correct1/total, correct5=correct5/total}
+end
 
 function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, sampler, epochSize, afterEpoch, filename)
    local modelTag = torch.random()

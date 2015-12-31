@@ -20,12 +20,16 @@ print(opt)
 
 -- create data loader
 local DataLoader = paths.dofile('data.lua')
-dataTrain = DataLoader.new(opt.nThreads, 'folder', {dataRoot: opt.dataTrainRoot,
-                                                    fineSize: opt.fineSize,
-                                                    loadSize: opt.loadSize})
-dataVal = DataLoader.new(opt.nThreads, 'folder', {dataRoot: opt.dataValRoot,
-                                                  fineSize: opt.fineSize,
-                                                  loadSize: opt.loadSize})
+dataTrain = DataLoader.new(opt.nThreads, 'folder', {dataRoot = opt.dataTrainRoot,
+                                                    fineSize = opt.fineSize,
+                                                    loadSize = opt.loadSize,
+                                                    batchSize = opt.batchSize,
+                                                })
+dataVal = DataLoader.new(opt.nThreads, 'folder', {dataRoot = opt.dataValRoot,
+                                                  fineSize = opt.fineSize,
+                                                  loadSize = opt.loadSize,
+                                                  batchSize = opt.batchSize,
+                                              })
 print("Dataset size: ", dataTrain:size())
 
 
@@ -163,16 +167,13 @@ end
 function evalModel()
    print("No evaluation...")
    -- if sgdState.epochCounter > 10 then os.exit(1) end
-   -- model:evaluate()
-   -- local batch = dataset_test:sample(10000)
-   -- local output = model:forward(batch.inputs)
-   -- local _, indices = torch.sort(output, 2, true)
-   -- -- indices has shape (batchSize, nClasses)
-   -- local top1 = indices:select(2, 1)
-   -- local acc = (top1:eq(batch.outputs:long()):sum() / top1:size(1))
-   -- print("\n\nAccuracy: ", acc)
-   -- table.insert(sgdState.accuracies, acc)
+   local results = evaluateModel(model, dataVal)
+   print(results)
+   table.insert(sgdState.accuracies, acc)
 end
+
+local results = evaluateModel(model, dataVal)
+print(results)
 
 
 -- --[[
@@ -185,7 +186,7 @@ TrainingHelpers.trainForever(
       inputs,labels = dataTrain:getBatch()
       return {inputs,labels}
    end,
-   dataTrain:size(),
+   0.005 * dataTrain:size(),
    evalModel,
    "snapshots/imagenet-residual-experiment1"
 )
