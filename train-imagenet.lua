@@ -99,9 +99,6 @@ model:cuda()
 loss:cuda()
 
 
--- DIRTY TRICK to use :)
---model.modules[2].weight:mul(0.1)
-
 --[[
 model:apply(function(m)
     -- Initialize weights
@@ -132,18 +129,44 @@ print(mem_usage)
 
 
 sgdState = {
+   --- For SGD with momentum ---
+   -- --[[
    learningRate = 0.01,
    momentum     = 0.9,
    dampening    = 0,
    weightDecay    = 1e-6,
    nesterov     = true,
-   --rho              = 0.5,
-   --whichOptimMethod = 'rmsprop',
    epochDropCount = 20,
-
-   -- Train stuff
-   options = opt,
-   accuracies = {},
+   --]]
+   --- For rmsprop, which is very fiddly and I don't trust it at all ---
+   --[[
+   learningRate = 1e-4,
+   alpha = 0.9,
+   whichOptimMethod = 'rmsprop',
+   --]]
+   --- For adadelta, which sucks ---
+   --[[
+   rho              = 0.3,
+   whichOptimMethod = 'adadelta',
+   --]]
+   --- For adagrad, which also sucks ---
+   --[[
+   learningRate = 3e-4,
+   whichOptimMethod = 'adagrad',
+   --]]
+   --- For adam, which also sucks ---
+   --[[
+   learningRate = 0.005,
+   whichOptimMethod = 'adam',
+   --]]
+   --- For the alternate implementation of NAG ---
+   --[[
+   learningRate = 0.01,
+   weightDecay = 1e-6,
+   momentum = 0.9,
+   whichOptimMethod = 'nag',
+   --]]
+   epochDropCount = 20,
 }
 
 -- Actual Training! -----------------------------
