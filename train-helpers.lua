@@ -77,39 +77,48 @@ function displayLoss(sgdState, loss_val)
    display.plot(sgdState.lossLog, {labels={'Images Seen', 'Loss'},
                       title='Loss',
                       rollPeriod=10,
+                      showRoller=true,
                       win=25})
 end
-function recordGradients(sgdState, model)
-   sgdState.gradientLog = sgdState.gradientLog or {}
-   local nextEntry = {}
-   local labels = {}
-   sgdState.gradientLogLabels = labels
-   sgdState.gradientLog[#sgdState.gradientLog + 1] = nextEntry
-   nextEntry[1] = sgdState.nSampledImages
-   labels[1] = "Seen Images"
-   for i,li in ipairs(model.modules) do
-      if (string.find(tostring(li.name), "ReLU")
-       or string.find(tostring(li.name), "BatchNorm")
-       or string.find(tostring(li.name), "View")
-       ) then
-       -- Do not print these layers
-      else
-         if li.gradWeight then
-            nextEntry[#nextEntry+1] = {li.gradWeight:mean()-li.gradWeight:var(),
-                                       li.gradWeight:mean(),
-                                       li.gradWeight:mean()+li.gradWeight:var()}
-            labels[#labels+1] = tostring(i)..":g"
-         end
-      end
-   end
-end
-function displayGradients(sgdState, model)
-   display.plot(sgdState.gradientLog, {
-                   labels=sgdState.gradientLogLabels,
+function displayWeights(model)
+    local layers = {}
+    -- Go through each module and add its weight and its gradient.
+    -- X axis = layer number.
+    -- Y axis = weight / gradient.
+    for i, li in ipairs(model.modules) do
+        if not (string.find(tostring(li), "ReLU")
+            or string.find(tostring(li), "BatchNorm")
+            or string.find(tostring(li), "View")
+            ) then
+            if li.gradWeight then
+                --print(tostring(li),li.weight:mean())
+                layers[#layers+1] = {i,
+                    -- Weight
+                    {li.weight:mean() - li.weight:std(),
+                    li.weight:mean(),
+                    li.weight:mean() + li.weight:std()},
+                    -- Gradient
+                    {li.gradWeight:mean() - li.gradWeight:std(),
+                    li.gradWeight:mean(),
+                    li.gradWeight:mean() + li.gradWeight:std()},
+                    -- Output
+                    {li.output:mean() - li.output:std(),
+                    li.output:mean(),
+                    li.output:mean() + li.output:std()},
+                }
+            end
+        end
+    end
+    -- Plot the result
+    --
+   display.plot(layers, {
+                   labels={"Layer", "Weights", "Gradients", "Outputs"},
                    customBars=true, errorBars=true,
-                   title='Babysitting',
-                   rollPeriod=10,
+                   title='Network Weights',
+                   rollPeriod=1,
                    win=26,
+                   --annotations={"o"},
+                   --axes={x={valueFormatter="function(x) {return x; }"}},
              })
 end
 
@@ -150,13 +159,12 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
       xlua.progress(sgdState.nSampledImages%epochSize, epochSize)
 
       recordLoss(sgdState, loss_val)
-      recordGradients(sgdState, model)
-      if sgdState.nEvalCounter % 20 == 0 then
-          displayLoss(sgdState, loss_val)
-          displayGradients(sgdState, model)
+      --if sgdState.nEvalCounter % 20 == 0 then
+      displayLoss(sgdState, loss_val)
+      displayWeights(model)
       --     print("\027[KLoss:", loss_val)
       --     print("Gradients:", gradients:norm())
-      end
+      --end
       -- if sgdState.nEvalCounter % 100 == 0 then
       --     local inspection = TrainingHelpers.inspectModel(model)
       --     inspection.nSampledImages = sgdState.nSampledImages
@@ -165,6 +173,7 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
       --table.insert(sgdState.lossLog, {loss = loss_val, nSampledImages = sgdState.nSampledImages})
       if math.floor(sgdState.nSampledImages / epochSize) ~= sgdState.epochCounter then
          -- Epoch completed!
+         xlua.progress(10,10)
          sgdState.epochCounter = math.floor(sgdState.nSampledImages / epochSize)
          if afterEpoch then afterEpoch() end
 
