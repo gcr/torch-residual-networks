@@ -4,6 +4,27 @@ require 'cudnn'
 require 'cunn'
 
 function addResidualLayer2(input,  nChannels, nOutChannels, stride)
+   --[[
+
+   Residual layers! Implements option (A) from Section 3.3. The input
+   is passed through two 3x3 convolution filters. In parallel, if the
+   number of input and output channels differ or if the stride is not
+   1, then the input is downsampled or zero-padded to have the correct
+   size and number of channels. Finally, the two versions of the input
+   are added together.
+
+               Input
+                 |
+         ,-------+-----.
+   Downsampling      3x3 convolution+dimensionality reduction
+        |               |
+        v               v
+   Zero-padding      3x3 convolution
+        |               |
+        `-----( Add )---'
+                 |
+              Output
+   --]]
    nOutChannels = nOutChannels or nChannels
    stride = stride or 1
    -- Path 1: Convolution

@@ -166,7 +166,6 @@ sgdState = {
    momentum = 0.9,
    whichOptimMethod = 'nag',
    --]]
-   epochDropCount = 20,
 }
 
 -- Actual Training! -----------------------------
