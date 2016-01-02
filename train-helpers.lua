@@ -144,8 +144,12 @@ function evaluateModel(model, datasetTest, epochSize)
    return {correct1=correct1/total, correct5=correct5/total}
 end
 
-function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, sampler, epochSize, afterEpoch, filename)
-   local modelTag = torch.random()
+function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, epochSize, afterEpoch, filename)
+   local d = Date{os.date()}
+   local modelTag = string.format("%04d%02d%02d-%d",
+      d:year(), d:month(), d:day(), torch.random())
+   local newFilename = filename.."-"..modelTag
+   print("Saving to "..newFilename)
    sgdState.epochSize = epochSize
    if sgdState.epochCounter == nil then
       sgdState.epochCounter = 0
@@ -162,29 +166,25 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
    end
    while true do -- Each epoch
       collectgarbage(); collectgarbage()
-      batch = sampler()
-      if not batch then
-         break
-      end
       -- Run forward and backward pass on inputs and labels
       model:training()
-      local loss_val, gradients = forwardBackwardBatch(batch)
+      local loss_val, gradients, batchProcessed = forwardBackwardBatch()
       -- SGD step: modifies weights in-place
       whichOptimMethod(function() return loss_val, gradients end,
                        weights,
                        sgdState)
       -- Display progress and loss
-      sgdState.nSampledImages = sgdState.nSampledImages + batch[1]:size(1)
+      sgdState.nSampledImages = sgdState.nSampledImages + batchProcessed
       sgdState.nEvalCounter = sgdState.nEvalCounter + 1
       xlua.progress(sgdState.nSampledImages%epochSize, epochSize)
 
       recordLoss(sgdState, loss_val)
-      --if sgdState.nEvalCounter % 20 == 0 then
-      displayLoss(sgdState, loss_val)
-      displayWeights(model)
+      if sgdState.nEvalCounter % 20 == 0 then
+          displayLoss(sgdState, loss_val)
+          displayWeights(model)
       --     print("\027[KLoss:", loss_val)
       --     print("Gradients:", gradients:norm())
-      --end
+      end
       -- if sgdState.nEvalCounter % 100 == 0 then
       --     local inspection = TrainingHelpers.inspectModel(model)
       --     inspection.nSampledImages = sgdState.nSampledImages
@@ -205,10 +205,9 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
          end
          -- Snapshot model (WARNING: Should be the last thing we do!)
          if filename then
-            local newFilename = filename.."-"..modelTag
-            --print("Snapshotting model to "..newFilename)
-            --torch.save(newFilename.."-model.tmp", model)
-            --os.rename(newFilename.."-model.tmp", newFilename.."-model.t7") -- POSIX guarantees automicity
+            print("Snapshotting model to "..newFilename)
+            torch.save(newFilename.."-model.tmp", model)
+            os.rename(newFilename.."-model.tmp", newFilename.."-model.t7") -- POSIX guarantees automicity
             print("Snapshotting sgdState to "..newFilename)
             torch.save(newFilename.."-sgdState.tmp", sgdState)
             os.rename(newFilename.."-sgdState.tmp", newFilename.."-sgdState.t7") -- POSIX guarantees automicity

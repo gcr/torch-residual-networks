@@ -8,7 +8,7 @@ require 'train-helpers'
 display = require 'display'
 
 opt = lapp[[
-      --batchSize       (default 64)     Batch size
+      --batchSize       (default 48)     Batch size
       --nThreads        (default 4)       Data loader threads
       --dataTrainRoot   (default /mnt/imagenet/train)   Data root folder
       --dataValRoot     (default /mnt/imagenet/val)   Data root folder
@@ -65,27 +65,19 @@ model = cudnn.ReLU(true)(model)
 model = cudnn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
 ------> 64, 56,56
 model = addResidualLayer2(model, 64)
-model = nn.SpatialBatchNormalization(64)(model)
 --model = addResidualLayer2(model, 64)
---model = nn.SpatialBatchNormalization(64)(model)
 model = addResidualLayer2(model, 64, 128, 2)
 ------> 128, 28,28
 model = addResidualLayer2(model, 128)
-model = nn.SpatialBatchNormalization(128)(model)
 --model = addResidualLayer2(model, 128)
---model = nn.SpatialBatchNormalization(128)(model)
 model = addResidualLayer2(model, 128, 256, 2)
 ------> 256, 14,14
 model = addResidualLayer2(model, 256)
-model = nn.SpatialBatchNormalization(256)(model)
 --model = addResidualLayer2(model, 256)
---model = nn.SpatialBatchNormalization(256)(model)
 model = addResidualLayer2(model, 256, 512, 2)
 ------> 512, 7,7
 model = addResidualLayer2(model, 512)
-model = nn.SpatialBatchNormalization(512)(model)
 --model = addResidualLayer2(model, 512)
---model = nn.SpatialBatchNormalization(512)(model)
 model = cudnn.ReLU(true)(cudnn.SpatialConvolution(512, 1000, 7,7)(model))
 ------> 1000, 1,1
 model = nn.Reshape(1000)(model)
@@ -98,6 +90,8 @@ loss = nn.ClassNLLCriterion()
 model:cuda()
 loss:cuda()
 
+-- Dirty trick: make the first conv layer weights easier to modify
+-- model.modules[2].weight:mul(0.5)
 
 --[[
 model:apply(function(m)
@@ -131,7 +125,8 @@ print(mem_usage)
 sgdState = {
    --- For SGD with momentum ---
    -- --[[
-   learningRate = 0.01,
+   --learningRate = 0.01,
+   learningRate = 0.001,
    momentum     = 0.9,
    dampening    = 0,
    weightDecay    = 1e-6,
@@ -140,7 +135,7 @@ sgdState = {
    --]]
    --- For rmsprop, which is very fiddly and I don't trust it at all ---
    --[[
-   learningRate = 1e-4,
+   learningRate = 1e-8,
    alpha = 0.9,
    whichOptimMethod = 'rmsprop',
    --]]
@@ -174,16 +169,19 @@ weights, gradients = model:getParameters()
 function forwardBackwardBatch(batch)
    model:training()
    gradients:zero()
-   local inputs = batch[1]:cuda()
-   local labels = batch[2]:cuda()
+   local inputs, labels = dataTrain:getBatch()
+   local inputs = inputs:cuda()
+   local labels = labels:cuda()
    local y = model:forward(inputs)
    local loss_val = loss:forward(y, labels)
    local df_dw = loss:backward(y, labels)
    model:backward(inputs, df_dw)
 
-   display.image(model.modules[2].weight, {win=24, title="First layer weights"})
+   if sgdState.nEvalCounter % 20 == 0 then
+      display.image(model.modules[2].weight, {win=24, title="First layer weights"})
+   end
 
-   return loss_val, gradients
+   return loss_val, gradients, inputs:size(1)
 end
 
 
@@ -200,7 +198,7 @@ local results = evaluateModel(model, dataVal)
 print(results)
 --]]
 
----[[
+--[[
 require 'graph'
 graph.dot(model.fg, 'MLP', '/tmp/MLP')
 os.execute('convert /tmp/MLP.svg /tmp/MLP.png')
@@ -214,12 +212,8 @@ TrainingHelpers.trainForever(
    forwardBackwardBatch,
    weights,
    sgdState,
-   function()
-      inputs,labels = dataTrain:getBatch()
-      return {inputs,labels}
-   end,
    dataTrain:size(),
    evalModel,
-   "snapshots/imagenet-residual-experiment1"
+   "snapshots/imagenet-residual-experiment2"
 )
 --]]
