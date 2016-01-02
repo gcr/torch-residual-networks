@@ -198,11 +198,6 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
          if afterEpoch then afterEpoch() end
 
          print("\n\n----- Epoch "..sgdState.epochCounter.." -----")
-         -- Every so often, decrease learning rate
-         if sgdState.epochCounter % sgdState.epochDropCount == 0 then
-            sgdState.learningRate = sgdState.learningRate * 0.1
-            print("Dropped learning rate to", sgdState.learningRate)
-         end
          -- Snapshot model (WARNING: Should be the last thing we do!)
          if filename then
             print("Snapshotting model to "..newFilename)

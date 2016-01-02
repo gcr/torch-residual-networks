@@ -125,13 +125,16 @@ print(mem_usage)
 sgdState = {
    --- For SGD with momentum ---
    -- --[[
-   --learningRate = 0.01,
+   -- My semi-working settings
    learningRate = 0.001,
+   weightDecay    = 1e-4,
+   -- Settings from their paper
+   --learningRate = 0.1,
+   --weightDecay    = 1e-4,
+
    momentum     = 0.9,
    dampening    = 0,
-   weightDecay    = 1e-6,
    nesterov     = true,
-   epochDropCount = 20,
    --]]
    --- For rmsprop, which is very fiddly and I don't trust it at all ---
    --[[
@@ -189,7 +192,7 @@ function evalModel()
    -- if sgdState.epochCounter > 10 then os.exit(1) end
    local results = evaluateModel(model, dataVal)
    print(results)
-   table.insert(sgdState.accuracies, acc)
+   --table.insert(sgdState.accuracies, acc)
 end
 
 --[[
