@@ -8,7 +8,8 @@ require 'train-helpers'
 display = require 'display'
 
 opt = lapp[[
-      --batchSize       (default 48)     Batch size
+      --batchSize       (default 24)      Sub-batch size
+      --iterSize        (default 8)       How many sub-batches in each batch
       --nThreads        (default 4)       Data loader threads
       --dataTrainRoot   (default /mnt/imagenet/train)   Data root folder
       --dataValRoot     (default /mnt/imagenet/val)   Data root folder
@@ -171,19 +172,35 @@ weights, gradients = model:getParameters()
 function forwardBackwardBatch(batch)
    model:training()
    gradients:zero()
-   local inputs, labels = dataTrain:getBatch()
-   local inputs = inputs:cuda()
-   local labels = labels:cuda()
-   local y = model:forward(inputs)
-   local loss_val = loss:forward(y, labels)
-   local df_dw = loss:backward(y, labels)
-   model:backward(inputs, df_dw)
+
+   --[[
+   if sgdState.nSampledImages < 10000 then
+       sgdState.learningRate = 0.001
+   else
+       sgdState.learningRate = 0.01
+   end
+   --]]
+
+   local loss_val = 0
+   local N = opt.iterSize
+   local inputs, labels
+   for i=1,N do
+       inputs, labels = dataTrain:getBatch()
+       local inputs = inputs:cuda()
+       local labels = labels:cuda()
+       local y = model:forward(inputs)
+       loss_val = loss_val + loss:forward(y, labels)
+       local df_dw = loss:backward(y, labels)
+       model:backward(inputs, df_dw)
+   end
+   loss_val = loss_val / N
+   gradients:mul( 1.0 / N )
 
    if sgdState.nEvalCounter % 20 == 0 then
       display.image(model.modules[2].weight, {win=24, title="First layer weights"})
    end
 
-   return loss_val, gradients, inputs:size(1)
+   return loss_val, gradients, inputs:size(1) * N
 end
 
 
