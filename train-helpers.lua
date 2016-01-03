@@ -193,7 +193,7 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
       --table.insert(sgdState.lossLog, {loss = loss_val, nSampledImages = sgdState.nSampledImages})
       if math.floor(sgdState.nSampledImages / epochSize) ~= sgdState.epochCounter then
          -- Epoch completed!
-         xlua.progress(10,10)
+         xlua.progress(epochSize, epochSize)
          sgdState.epochCounter = math.floor(sgdState.nSampledImages / epochSize)
          if afterEpoch then afterEpoch() end
 
