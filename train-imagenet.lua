@@ -60,29 +60,35 @@ print("Dataset size: ", dataTrain:size())
 -- Residual network.
 -- Input: 3x224x224
 input = nn.Identity()()
-model = cudnn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
 ------> 64, 112,112
+model = cudnn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
+--model = nn.SpatialBatchNormalization(64)(model)
 model = cudnn.ReLU(true)(model)
 model = cudnn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
 ------> 64, 56,56
 model = addResidualLayer2(model, 64)
---model = addResidualLayer2(model, 64)
-model = addResidualLayer2(model, 64, 128, 2)
+model = addResidualLayer2(model, 64)
+model = addResidualLayer2(model, 64)
 ------> 128, 28,28
+model = addResidualLayer2(model, 64, 128, 2)
 model = addResidualLayer2(model, 128)
---model = addResidualLayer2(model, 128)
-model = addResidualLayer2(model, 128, 256, 2)
+model = addResidualLayer2(model, 128)
+model = addResidualLayer2(model, 128)
 ------> 256, 14,14
+model = addResidualLayer2(model, 128, 256, 2)
 model = addResidualLayer2(model, 256)
---model = addResidualLayer2(model, 256)
-model = addResidualLayer2(model, 256, 512, 2)
+model = addResidualLayer2(model, 256)
+model = addResidualLayer2(model, 256)
+model = addResidualLayer2(model, 256)
+model = addResidualLayer2(model, 256)
 ------> 512, 7,7
+model = addResidualLayer2(model, 256, 512, 2)
 model = addResidualLayer2(model, 512)
---model = addResidualLayer2(model, 512)
-model = cudnn.ReLU(true)(cudnn.SpatialConvolution(512, 1000, 7,7)(model))
+model = addResidualLayer2(model, 512)
 ------> 1000, 1,1
-model = nn.Reshape(1000)(model)
+model = cudnn.ReLU(true)(cudnn.SpatialConvolution(512, 1000, 7,7)(model))
 ------> 1000
+model = nn.Reshape(1000)(model)
 model = nn.LogSoftMax()(model)
 
 model = nn.gModule({input}, {model})
