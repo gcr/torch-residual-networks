@@ -224,6 +224,14 @@ os.execute('convert /tmp/MLP.svg /tmp/MLP.png')
 display.image(image.load('/tmp/MLP.png'), {title="Network Structure", win=23})
 --]]
 
+-- --[[
+require 'ncdu-model-explore'
+local y = model:forward(torch.randn(opt.batchSize, 3, 224,224):cuda())
+local df_dw = loss:backward(y, torch.zeros(opt.batchSize):cuda())
+model:backward(torch.randn(opt.batchSize,3,224,224):cuda(), df_dw)
+exploreNcdu(model)
+--]]
+
 
 ---[[
 TrainingHelpers.trainForever(
