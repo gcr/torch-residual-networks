@@ -13,7 +13,7 @@ function buildNcduLayer(name, module)
          end
          table.insert(strt, ']')
          result = {name = table.concat(strt),
-                   dsize = module:storage():size() * module:storage():elementSize()
+                   dsize = module:numel() * module:storage():elementSize()
                 }
       else
          result = {name = name..": [empty "..torch.typename(module).."]"}
@@ -21,7 +21,7 @@ function buildNcduLayer(name, module)
    elseif type(module)=="table" and module.modules then
       result = { {name = name..": "..string.gsub(tostring(module), "\n", " ")} }
       for i,m in ipairs(module.modules) do
-         table.insert(result, buildNcduLayer(string.gsub(tostring(i), "\n", " "), m))
+         table.insert(result, buildNcduLayer(string.format("%03d", i), m))
       end
    elseif type(module)=="table" then
       result = {{name=name..": "..string.gsub(tostring(module), "\n", " ")}}
@@ -46,7 +46,7 @@ function exploreNcdu(model)
    tmphandle:write(buildNcdu(model))
    tmphandle:close()
    os.execute("ncdu -f "..tmpname)
-   os.unlink(tmpname)
+   os.remove(tmpname)
 end
 
 
@@ -81,11 +81,3 @@ end
 --    end
 -- end
 
-
-require 'nn'
-model = nn.Sequential()
-model:add(nn.SpatialConvolution(3,5,  10,10, 1,1))
-model:add(nn.SpatialConvolution(5,10, 3,3,1,1))
-model:forward(torch.randn(10, 3, 224,224))
-
-print(exploreNcdu(model))
