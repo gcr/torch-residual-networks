@@ -211,8 +211,9 @@ function forwardBackwardBatch(batch)
    local inputs, labels
    for i=1,N do
        inputs, labels = dataTrain:getBatch()
-       local inputs = inputs:cuda()
-       local labels = labels:cuda()
+       inputs = inputs:cuda()
+       labels = labels:cuda()
+       collectgarbage(); collectgarbage();
        local y = model:forward(inputs)
        loss_val = loss_val + loss:forward(y, labels)
        local df_dw = loss:backward(y, labels)
@@ -261,7 +262,7 @@ exploreNcdu(model)
 
 -- --[[
 TrainingHelpers.trainForever(
-   model,
+   model.modules[1],
    forwardBackwardBatch,
    weights,
    sgdState,

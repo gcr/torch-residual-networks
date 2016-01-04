@@ -130,6 +130,7 @@ function evaluateModel(model, datasetTest, epochSize)
    local correct5 = 0
    local total = 0
    while total < datasetTest:size() do
+       collectgarbage(); collectgarbage();
        local batch, labels = datasetTest:getBatch()
        local y = model:forward(batch:cuda()):float()
        local _, indices = torch.sort(y, 2, true)
@@ -167,7 +168,6 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
    while true do -- Each epoch
       collectgarbage(); collectgarbage()
       -- Run forward and backward pass on inputs and labels
-      model:training()
       local loss_val, gradients, batchProcessed = forwardBackwardBatch()
       -- SGD step: modifies weights in-place
       whichOptimMethod(function() return loss_val, gradients end,
