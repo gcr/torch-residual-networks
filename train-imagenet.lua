@@ -9,7 +9,7 @@ display = require 'display'
 workbook = (require'lab-workbook-for-trello'):newExperiment{}
 
 opt = lapp[[
-      --batchSize       (default 96)      Sub-batch size
+      --batchSize       (default 64)      Sub-batch size
       --iterSize        (default 1)       How many sub-batches in each batch
       --nThreads        (default 4)       Data loader threads
       --dataTrainRoot   (default /mnt/imagenet/train)   Data root folder
@@ -61,79 +61,64 @@ print("Dataset size: ", dataTrain:size())
 
 -- Residual network.
 -- Input: 3x224x224
-input = nn.Identity()()
-------> 64, 112,112
-model = cudnn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
---model = nn.SpatialBatchNormalization(64)(model)
-model = cudnn.ReLU(true)(model)
-model = cudnn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
-------> 64, 56,56
-model = addResidualLayer2(model, 64)
-model = addResidualLayer2(model, 64)
-model = addResidualLayer2(model, 64)
-------> 128, 28,28
-model = addResidualLayer2(model, 64, 128, 2)
-model = addResidualLayer2(model, 128)
-model = addResidualLayer2(model, 128)
-model = addResidualLayer2(model, 128)
-------> 256, 14,14
-model = addResidualLayer2(model, 128, 256, 2)
-model = addResidualLayer2(model, 256)
-model = addResidualLayer2(model, 256)
-model = addResidualLayer2(model, 256)
-model = addResidualLayer2(model, 256)
-model = addResidualLayer2(model, 256)
-------> 512, 7,7
-model = addResidualLayer2(model, 256, 512, 2)
-model = addResidualLayer2(model, 512)
-model = addResidualLayer2(model, 512)
-------> 1000, 1,1
-model = cudnn.ReLU(true)(cudnn.SpatialConvolution(512, 1000, 7,7)(model))
-------> 1000
-model = nn.Reshape(1000)(model)
-model = nn.LogSoftMax()(model)
+if opt.loadFrom == "" then
+    input = nn.Identity()()
+    ------> 64, 112,112
+    model = cudnn.SpatialConvolution(3, 64, 7,7, 2,2, 3,3)(input)
+    --model = nn.SpatialBatchNormalization(64)(model)
+    model = cudnn.ReLU(true)(model)
+    model = cudnn.SpatialMaxPooling(3,3,  2,2,  1,1)(model)
+    ------> 64, 56,56
+    model = addResidualLayer2(model, 64)
+    model = addResidualLayer2(model, 64)
+    model = addResidualLayer2(model, 64)
+    ------> 128, 28,28
+    model = addResidualLayer2(model, 64, 128, 2)
+    model = addResidualLayer2(model, 128)
+    model = addResidualLayer2(model, 128)
+    model = addResidualLayer2(model, 128)
+    ------> 256, 14,14
+    model = addResidualLayer2(model, 128, 256, 2)
+    model = addResidualLayer2(model, 256)
+    model = addResidualLayer2(model, 256)
+    model = addResidualLayer2(model, 256)
+    model = addResidualLayer2(model, 256)
+    model = addResidualLayer2(model, 256)
+    ------> 512, 7,7
+    model = addResidualLayer2(model, 256, 512, 2)
+    model = addResidualLayer2(model, 512)
+    model = addResidualLayer2(model, 512)
+    ------> 1000, 1,1
+    model = cudnn.ReLU(true)(cudnn.SpatialConvolution(512, 1000, 7,7)(model))
+    ------> 1000
+    model = nn.Reshape(1000)(model)
+    model = nn.LogSoftMax()(model)
 
-model = nn.gModule({input}, {model})
+    model = nn.gModule({input}, {model})
+    model:cuda()
+else
+    print("Loading model from "..opt.loadFrom)
+    cutorch.setDevice(1)
+    model = torch.load(opt.loadFrom)
+    print "Done"
+end
 
 loss = nn.ClassNLLCriterion()
-model:cuda()
 loss:cuda()
 
-
 -- Convert model to multi-GPU model :)
+----[[
 dmodel = nn.DataParallelTable(1)
-for i=1, 4 do
+dmodel:add(model, 1)
+for i=2, 4 do
     cutorch.setDevice(i)
-    dmodel:add(model:clone():cuda(), i)
+    dmodel:add(model:clone(), i)
 end
 cutorch.setDevice(1)
 model = dmodel
+--]]
 -- required to fix call to SyncParameters
 model:forward(torch.randn(8, 3, 224,224):cuda())
-
-if opt.loadFrom ~= "" then
-    print("Trying to load model from "..opt.loadFrom)
-    --model2 = torch.load(opt.loadFrom)
-    --model2:float()
-    --assert(#model2.modules == #model.modules)
-    local weights,grads = model:getParameters()
-    weights:copy(torch.load(opt.loadFrom):cuda())
-    --weights:zero()
-    --weights:copy(model2:getParameters())
-    --model2 = nil
-    --collectgarbage(); collectgarbage()
-    --model:forward(torch.randn(8, 3, 224,224):cuda())
-    --model:float()
-    --local w,g = model:getParameters()
-    --g:storage():resize(0)
-    --collectgarbage()
-    --collectgarbage()
-    ----model:cuda()
-    --exploreNcdu(model)
-    --print({cutorch.getMemoryUsage(1)})
-end
-
-
 
 -- Dirty trick: make the first conv layer weights easier to modify
 -- model.modules[2].weight:mul(0.5)
@@ -153,18 +138,6 @@ model:apply(function(m)
 end)
 --]]
 
-
-
---[[
--- Show memory usage
-print(#model:forward(torch.randn(64, 3, 224,224):cuda()))
-inspectMemory(model)
-mem_usage = {}
-for i,module in ipairs(model.modules) do
-   accumMemoryByFieldName(module, mem_usage)
-end
-print(mem_usage)
---]]
 
 
 sgdState = {
@@ -215,7 +188,7 @@ sgdState = {
 if opt.loadFrom ~= "" then
     print("Trying to load sgdState from "..string.gsub(opt.loadFrom, "model", "sgdState"))
     collectgarbage(); collectgarbage(); collectgarbage()
-    sgdState = torch.load(""..string.gsub(opt.loadFrom, "weights", "sgdState"))
+    sgdState = torch.load(""..string.gsub(opt.loadFrom, "model", "sgdState"))
     collectgarbage(); collectgarbage(); collectgarbage()
     print("Got", sgdState.nSampledImages,"images")
 end
@@ -231,7 +204,6 @@ function forwardBackwardBatch(batch)
     --   - Zero the gradient parameters so we can accumulate them again.
    model:training()
    model:syncParameters() -- This copies parameters from first GPU to
-   gradients:zero() -- Not enough!! This will only zero GPU #1's params!
    model:zeroGradParameters()
 
    --[[
