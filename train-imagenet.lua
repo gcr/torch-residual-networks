@@ -17,6 +17,7 @@ opt = lapp[[
       --verbose         (default true)
       --loadSize        (default 256)     Size of image when loading
       --fineSize        (default 224)     Size of image crop
+      --loadFrom        (default "")      Model to load
 ]]
 print(opt)
 
@@ -98,6 +99,7 @@ loss = nn.ClassNLLCriterion()
 model:cuda()
 loss:cuda()
 
+
 -- Convert model to multi-GPU model :)
 dmodel = nn.DataParallelTable(1)
 for i=1, 4 do
@@ -108,6 +110,30 @@ cutorch.setDevice(1)
 model = dmodel
 -- required to fix call to SyncParameters
 model:forward(torch.randn(8, 3, 224,224):cuda())
+
+if opt.loadFrom ~= "" then
+    print("Trying to load model from "..opt.loadFrom)
+    --model2 = torch.load(opt.loadFrom)
+    --model2:float()
+    --assert(#model2.modules == #model.modules)
+    local weights,grads = model:getParameters()
+    weights:copy(torch.load(opt.loadFrom):cuda())
+    --weights:zero()
+    --weights:copy(model2:getParameters())
+    --model2 = nil
+    --collectgarbage(); collectgarbage()
+    --model:forward(torch.randn(8, 3, 224,224):cuda())
+    --model:float()
+    --local w,g = model:getParameters()
+    --g:storage():resize(0)
+    --collectgarbage()
+    --collectgarbage()
+    ----model:cuda()
+    --exploreNcdu(model)
+    --print({cutorch.getMemoryUsage(1)})
+end
+
+
 
 -- Dirty trick: make the first conv layer weights easier to modify
 -- model.modules[2].weight:mul(0.5)
@@ -185,6 +211,15 @@ sgdState = {
    --]]
 }
 
+
+if opt.loadFrom ~= "" then
+    print("Trying to load sgdState from "..string.gsub(opt.loadFrom, "model", "sgdState"))
+    collectgarbage(); collectgarbage(); collectgarbage()
+    sgdState = torch.load(""..string.gsub(opt.loadFrom, "weights", "sgdState"))
+    collectgarbage(); collectgarbage(); collectgarbage()
+    print("Got", sgdState.nSampledImages,"images")
+end
+
 -- Actual Training! -----------------------------
 weights, gradients = model:getParameters()
 function forwardBackwardBatch(batch)
@@ -196,7 +231,7 @@ function forwardBackwardBatch(batch)
     --   - Zero the gradient parameters so we can accumulate them again.
    model:training()
    model:syncParameters() -- This copies parameters from first GPU to
-   --gradients:zero() -- Not enough!! This will only zero GPU #1's params!
+   gradients:zero() -- Not enough!! This will only zero GPU #1's params!
    model:zeroGradParameters()
 
    --[[
