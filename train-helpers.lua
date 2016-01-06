@@ -152,15 +152,9 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
    local newFilename = filename.."-"..modelTag
    print("Saving to "..newFilename)
    sgdState.epochSize = epochSize
-   if sgdState.epochCounter == nil then
-      sgdState.epochCounter = 0
-   end
-   if sgdState.nSampledImages == nil then
-     sgdState.nSampledImages = 0
-   end
-   if sgdState.nEvalCounter == nil then
-      sgdState.nEvalCounter = 0
-   end
+   sgdState.epochCounter = sgdState.epochCounter or 0
+   sgdState.nSampledImages = sgdState.nSampledImages or 0
+   sgdState.nEvalCounter = sgdState.nEvalCounter or 0
    local whichOptimMethod = optim.sgd
    if sgdState.whichOptimMethod then
        whichOptimMethod = optim[sgdState.whichOptimMethod]
