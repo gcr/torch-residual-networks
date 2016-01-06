@@ -6,6 +6,7 @@ require 'cudnn'
 require 'nngraph'
 require 'train-helpers'
 display = require 'display'
+workbook = (require'lab-workbook-for-trello'):newExperiment{}
 
 opt = lapp[[
       --batchSize       (default 96)      Sub-batch size

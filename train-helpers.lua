@@ -74,7 +74,7 @@ function recordLoss(sgdState, loss_val)
    }
 end
 function displayLoss(sgdState, loss_val)
-   display.plot(sgdState.lossLog, {labels={'Images Seen', 'Loss'},
+   workbook:plot("Loss",sgdState.lossLog, {labels={'Images Seen', 'Loss'},
                       title='Loss',
                       rollPeriod=10,
                       showRoller=true,
@@ -111,7 +111,7 @@ function displayWeights(model)
     end
     -- Plot the result
     --
-   display.plot(layers, {
+   workbook:plot("Layers", layers, {
                    labels={"Layer", "Weights", "Gradients", "Outputs"},
                    customBars=true, errorBars=true,
                    title='Network Weights',
