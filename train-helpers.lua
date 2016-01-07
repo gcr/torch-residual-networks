@@ -146,7 +146,7 @@ function evaluateModel(model, datasetTest)
    return {correct1=correct1/total, correct5=correct5/total}
 end
 
-function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, epochSize, afterEpoch, filename)
+function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, epochSize, afterEpoch, filename, snapshotEvery)
    local d = Date{os.date()}
    local modelTag = string.format("%04d%02d%02d-%d",
       d:year(), d:month(), d:day(), torch.random())
@@ -194,7 +194,7 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
 
          print("\n\n----- Epoch "..sgdState.epochCounter.." -----")
          -- Snapshot model (WARNING: Should be the last thing we do!)
-         if filename then
+         if filename and sgdState.epochCounter % (snapshotEvery or 1) == 0 then
             print("Snapshotting model to "..newFilename)
             torch.save(newFilename.."-model.tmp", model)
             os.rename(newFilename.."-model.tmp", newFilename.."-model.t7") -- POSIX guarantees automicity
