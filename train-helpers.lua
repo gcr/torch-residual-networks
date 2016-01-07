@@ -123,7 +123,7 @@ function displayWeights(model)
 end
 
 
-function evaluateModel(model, datasetTest, epochSize)
+function evaluateModel(model, datasetTest)
    print("Evaluating...")
    model:evaluate()
    local correct1 = 0
