@@ -33,8 +33,8 @@ local N = opt.Nsize
 if opt.loadFrom == "" then
     input = nn.Identity()()
     ------> 3, 32,32
-    model = cudnn.SpatialConvolution(3, 16, 3,3, 1,1, 1,1)(model)
-    model = nn.SpatialBatchNormalization(16)(model)
+    model = cudnn.SpatialConvolution(3, 16, 3,3, 1,1, 1,1)(input)
+    model = cudnn.SpatialBatchNormalization(16)(model)
     model = cudnn.ReLU(true)(model)
     ------> 16, 32,32   First Group
     for i=1,N-1 do   model = addResidualLayer2(model, 16)   end

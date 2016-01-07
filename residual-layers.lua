@@ -31,7 +31,7 @@ function addResidualLayer2(input,  nChannels, nOutChannels, stride)
    -- The first layer does the downsampling and the striding
    local net = cudnn.SpatialConvolution(nChannels, nOutChannels,
                                            3,3, stride,stride, 1,1)(input)
-   net = nn.SpatialBatchNormalization(nOutChannels)(net)
+   net = cudnn.SpatialBatchNormalization(nOutChannels)(net)
    net = cudnn.ReLU(true)(net)
    net = cudnn.SpatialConvolution(nOutChannels, nOutChannels,
                                       3,3, 1,1, 1,1)(net)
@@ -58,7 +58,7 @@ function addResidualLayer2(input,  nChannels, nOutChannels, stride)
 
    -- Add them together
    net = nn.CAddTable(){net, skip}
-   net = nn.SpatialBatchNormalization(nOutChannels)(net)
+   net = cudnn.SpatialBatchNormalization(nOutChannels)(net)
    --net = cudnn.ReLU(true)(net)
    -- ^ don't put a ReLU here! see http://gitxiv.com/comments/7rffyqcPLirEEsmpX
 
