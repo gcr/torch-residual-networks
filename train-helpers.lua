@@ -74,7 +74,7 @@ function recordLoss(sgdState, loss_val)
    }
 end
 function displayLoss(sgdState, loss_val)
-   display.plot(sgdState.lossLog, {labels={'Images Seen', 'Loss'},
+   workbook:plot("Loss",sgdState.lossLog, {labels={'Images Seen', 'Loss'},
                       title='Loss',
                       rollPeriod=10,
                       showRoller=true,
@@ -111,7 +111,7 @@ function displayWeights(model)
     end
     -- Plot the result
     --
-   display.plot(layers, {
+   workbook:plot("Layers", layers, {
                    labels={"Layer", "Weights", "Gradients", "Outputs"},
                    customBars=true, errorBars=true,
                    title='Network Weights',
@@ -130,6 +130,7 @@ function evaluateModel(model, datasetTest, epochSize)
    local correct5 = 0
    local total = 0
    while total < datasetTest:size() do
+       collectgarbage(); collectgarbage();
        local batch, labels = datasetTest:getBatch()
        local y = model:forward(batch:cuda()):float()
        local _, indices = torch.sort(y, 2, true)
@@ -151,15 +152,9 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
    local newFilename = filename.."-"..modelTag
    print("Saving to "..newFilename)
    sgdState.epochSize = epochSize
-   if sgdState.epochCounter == nil then
-      sgdState.epochCounter = 0
-   end
-   if sgdState.nSampledImages == nil then
-     sgdState.nSampledImages = 0
-   end
-   if sgdState.nEvalCounter == nil then
-      sgdState.nEvalCounter = 0
-   end
+   sgdState.epochCounter = sgdState.epochCounter or 0
+   sgdState.nSampledImages = sgdState.nSampledImages or 0
+   sgdState.nEvalCounter = sgdState.nEvalCounter or 0
    local whichOptimMethod = optim.sgd
    if sgdState.whichOptimMethod then
        whichOptimMethod = optim[sgdState.whichOptimMethod]
@@ -167,7 +162,6 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
    while true do -- Each epoch
       collectgarbage(); collectgarbage()
       -- Run forward and backward pass on inputs and labels
-      model:training()
       local loss_val, gradients, batchProcessed = forwardBackwardBatch()
       -- SGD step: modifies weights in-place
       whichOptimMethod(function() return loss_val, gradients end,
