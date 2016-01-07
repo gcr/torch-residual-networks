@@ -74,7 +74,7 @@ sgdState = {
    --- For SGD with momentum ---
    ----[[
    -- My semi-working settings
-   learningRate   = 0.1,
+   learningRate   = "will be set later",
    weightDecay    = 1e-4,
    -- Settings from their paper
    --learningRate = 0.1,
@@ -135,18 +135,14 @@ function forwardBackwardBatch(batch)
     model:training()
     gradients:zero()
 
-   --[[
-   -- -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
-   -- if epoch <= math.floor(400 / epochSize) then
-   --    optimState.learningRate = 0.01 -- warm up
-   -- elseif epoch <= math.floor(32000 / epochSize) then
-   --    optimState.learningRate = 0.1
-   -- elseif epoch <= math.floor(48000 / epochSize) then
-   --    optimState.learningRate = 0.01
-   -- else
-   --    optimState.learningRate = 0.001
-   -- end
-   --]]
+    -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
+    if sgdState.epochCounter < 50 then
+        sgdState.learningRate = 0.1
+    elseif sgdState.epochCounter < 10 then
+        sgdState.learningRate = 0.01
+    elseif sgdState.epochCounter < 100 then
+        sgdState.learningRate = 0.001
+    end
 
     local loss_val = 0
     local N = opt.iterSize
