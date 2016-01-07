@@ -132,6 +132,7 @@ function evaluateModel(model, datasetTest)
    while total < datasetTest:size() do
        collectgarbage(); collectgarbage();
        local batch, labels = datasetTest:getBatch()
+       labels = labels:long()
        local y = model:forward(batch:cuda()):float()
        local _, indices = torch.sort(y, 2, true)
        -- indices has shape (batchSize, nClasses)

@@ -4,9 +4,10 @@ gm = require 'graphicsmagick'
 Dataset = {}
 local CIFAR, parent = torch.class("Dataset.CIFAR")
 
-function CIFAR:__init(path, mode)
+function CIFAR:__init(path, mode, batchSize)
    local trsize = 50000
    local tesize = 2000
+   self.batchSize = batchSize
 
    if mode == "train" then
       self.data = torch.Tensor(trsize, 3*32*32)
@@ -26,6 +27,7 @@ function CIFAR:__init(path, mode)
       self.labels = self.labels + 1
    end
 
+   self.data = self.data[{ {1, self:size()} }] -- Allow using a subset :)
    self.data = self.data:reshape(self:size(), 3, 32,32)
 
 end
@@ -70,4 +72,10 @@ end
 
 function CIFAR:cuda()
    self.use_cuda = true
+end
+
+function CIFAR:getBatch()
+    -- You should use sample instead! :-)
+    local batch = self:sample(self.batchSize)
+    return batch.inputs, batch.outputs
 end

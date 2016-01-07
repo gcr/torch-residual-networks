@@ -7,10 +7,10 @@ require 'cudnn'
 require 'nngraph'
 require 'train-helpers'
 display = require 'display'
-workbook = (require'lab-workbook-for-trello'):newExperiment{}
+workbook = (require'lab-workbook-for-trello'):newExperiment{experimentName="CIFAR dev"}
 
 opt = lapp[[
-      --batchSize       (default 64)      Sub-batch size
+      --batchSize       (default 256)      Sub-batch size
       --iterSize        (default 1)       How many sub-batches in each batch
       --Nsize           (default 3)       Model has 6*n+2 layers.
       --dataRoot        (default /mnt/cifar) Data root folder
@@ -20,8 +20,8 @@ opt = lapp[[
 print(opt)
 
 -- create data loader
-dataTrain = Dataset.CIFAR(opt.dataRoot, "train")
-dataTest = Dataset.CIFAR(opt.dataRoot, "test")
+dataTrain = Dataset.CIFAR(opt.dataRoot, "train", opt.batchSize)
+dataTest = Dataset.CIFAR(opt.dataRoot, "test", opt.batchSize)
 local mean,std = dataTrain:preprocess()
 dataTest:preprocess(mean,std)
 print("Dataset size: ", dataTrain:size())
@@ -44,17 +44,18 @@ if opt.loadFrom == "" then
     model = addResidualLayer2(model, 32, 64, 2)
     ------> 64, 8,8     Third Group
     for i=1,N-1 do   model = addResidualLayer2(model, 64)   end
-    model = addResidualLayer2(model, 64, 10)
+    model = addResidualLayer2(model, 64, 10, 1)
     ------> 10, 8,8     Pooling, Linear, Softmax
-    model = nn.SpatialAveragePooling(10,10)(model)
+    model = nn.SpatialAveragePooling(8,8)(model)
     model = nn.Reshape(10)(model)
     model = nn.Linear(10, 10)(model)
-    -- batch norm here? maybe not?
+    -- batch norm here? yes? no?
     model = nn.ReLU(true)(model)
     model = nn.LogSoftMax()(model)
 
     model = nn.gModule({input}, {model})
     model:cuda()
+    --print(#model:forward(torch.randn(100, 3, 32,32):cuda()))
 else
     print("Loading model from "..opt.loadFrom)
     cutorch.setDevice(1)
@@ -131,7 +132,8 @@ function forwardBackwardBatch(batch)
     -- We have to do two changes:
     --   - Copy the new parameters from GPU #1 to the rest of them;
     --   - Zero the gradient parameters so we can accumulate them again.
-   model:training()
+    model:training()
+    gradients:zero()
 
    --[[
    -- -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
@@ -146,37 +148,45 @@ function forwardBackwardBatch(batch)
    -- end
    --]]
 
-   local loss_val = 0
-   local N = opt.iterSize
-   local inputs, labels
-   for i=1,N do
-       inputs, labels = dataTrain:getBatch()
-       inputs = inputs:cuda()
-       labels = labels:cuda()
-       collectgarbage(); collectgarbage();
-       local y = model:forward(inputs)
-       loss_val = loss_val + loss:forward(y, labels)
-       local df_dw = loss:backward(y, labels)
-       model:backward(inputs, df_dw)
-       -- The above call will accumulate all GPUs' parameters onto GPU #1
-   end
-   loss_val = loss_val / N
-   gradients:mul( 1.0 / N )
+    local loss_val = 0
+    local N = opt.iterSize
+    local inputs, labels
+    for i=1,N do
+        inputs, labels = dataTrain:getBatch()
+        inputs = inputs:cuda()
+        labels = labels:cuda()
+        collectgarbage(); collectgarbage();
+        local y = model:forward(inputs)
+        loss_val = loss_val + loss:forward(y, labels)
+        local df_dw = loss:backward(y, labels)
+        model:backward(inputs, df_dw)
+        -- The above call will accumulate all GPUs' parameters onto GPU #1
+    end
+    loss_val = loss_val / N
+    gradients:mul( 1.0 / N )
 
-   if sgdState.nEvalCounter % 20 == 0 then
-      display.image(model.modules[1].modules[2].weight, {win=24, title="First layer weights"})
-   end
+    if sgdState.nEvalCounter % 20 == 0 then
+        display.image(model.modules[2].weight, {win=24, title="First layer weights"})
+    end
 
-   return loss_val, gradients, inputs:size(1) * N
+    return loss_val, gradients, inputs:size(1) * N
 end
 
 
 function evalModel()
-   -- if sgdState.epochCounter > 10 then os.exit(1) end
-   local results = evaluateModel(model, dataTest)
-   print(results)
-   --table.insert(sgdState.accuracies, acc)
+    -- if sgdState.epochCounter > 10 then os.exit(1) end
+    local results = evaluateModel(model, dataTest)
+    print(results)
+    sgdState.accLog = sgdState.accLog or {}
+    table.insert(sgdState.accLog, {sgdState.nSampledImages or 0, 1.0-results.correct1})
+    workbook:plot("Test Classification Error", sgdState.accLog, {labels={'Images Seen', 'Error'},
+                      title='Test Classification Error',
+                      rollPeriod=1,
+                      })
+    --table.insert(sgdState.accuracies, acc)
 end
+
+evalModel()
 
 --[[
 local results = evaluateModel(model, dataVal)
@@ -190,7 +200,7 @@ os.execute('convert /tmp/MLP.svg /tmp/MLP.png')
 display.image(image.load('/tmp/MLP.png'), {title="Network Structure", win=23})
 --]]
 
-----[[
+---[[
 require 'ncdu-model-explore'
 local y = model:forward(torch.randn(opt.batchSize, 3, 32,32):cuda())
 local df_dw = loss:backward(y, torch.zeros(opt.batchSize):cuda())
@@ -201,12 +211,13 @@ exploreNcdu(model)
 
 -- --[[
 TrainingHelpers.trainForever(
-   model.modules[1],
-   forwardBackwardBatch,
-   weights,
-   sgdState,
-   dataTrain:size(),
-   evalModel,
-   opt.experimentName,
+model,
+forwardBackwardBatch,
+weights,
+sgdState,
+dataTrain:size(),
+evalModel,
+opt.experimentName,
+10
 )
 --]]

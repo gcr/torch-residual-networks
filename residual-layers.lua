@@ -50,6 +50,10 @@ function addResidualLayer2(input,  nChannels, nOutChannels, stride)
    if nOutChannels > nChannels then
        -- optional padding
        skip = nn.Padding(1, (nOutChannels - nChannels), 3)(skip)
+   elseif nOutChannels < nChannels then
+       -- optional narrow, ugh.
+       skip = nn.Narrow(2, 1, nOutChannels)(skip)
+       -- NOTE this BREAKS with non-batch inputs!!
    end
 
    -- Add them together
