@@ -136,11 +136,11 @@ function forwardBackwardBatch(batch)
     gradients:zero()
 
     -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
-    if sgdState.epochCounter < 50 then
+    if sgdState.epochCounter < 80 then
         sgdState.learningRate = 0.1
-    elseif sgdState.epochCounter < 10 then
+    elseif sgdState.epochCounter < 160 then
         sgdState.learningRate = 0.01
-    elseif sgdState.epochCounter < 100 then
+    else
         sgdState.learningRate = 0.001
     end
 
@@ -180,6 +180,10 @@ function evalModel()
                       rollPeriod=1,
                       })
     --table.insert(sgdState.accuracies, acc)
+    if (sgdState.epochCounter or 0) > 300 then
+        print("Training complete, go home")
+        os.exit()
+    end
 end
 
 evalModel()
