@@ -10,9 +10,9 @@ display = require 'display'
 workbook = (require'lab-workbook-for-trello'):newExperiment{experimentName="CIFAR dev"}
 
 opt = lapp[[
-      --batchSize       (default 256)      Sub-batch size
+      --batchSize       (default 128)      Sub-batch size
       --iterSize        (default 1)       How many sub-batches in each batch
-      --Nsize           (default 3)       Model has 6*n+2 layers.
+      --Nsize           (default 9)       Model has 6*n+2 layers.
       --dataRoot        (default /mnt/cifar) Data root folder
       --loadFrom        (default "")      Model to load
       --experimentName  (default "snapshots/cifar-residual-experiment1")
@@ -56,6 +56,19 @@ if opt.loadFrom == "" then
     model = nn.gModule({input}, {model})
     model:cuda()
     --print(#model:forward(torch.randn(100, 3, 32,32):cuda()))
+
+    model:apply(function(m)
+        -- Initialize weights
+        local name = torch.type(m)
+        if name:find('Convolution') then
+            m.weight:normal(0.0, math.sqrt(2/(m.nInputPlane*m.kW*m.kH)))
+            m.bias:fill(0)
+        elseif name:find('BatchNormalization') then
+            if m.weight then m.weight:normal(1.0, 0.002) end
+            if m.bias then m.bias:fill(0) end
+        end
+    end)
+
 else
     print("Loading model from "..opt.loadFrom)
     cutorch.setDevice(1)
@@ -180,7 +193,7 @@ function evalModel()
                       rollPeriod=1,
                       })
     --table.insert(sgdState.accuracies, acc)
-    if (sgdState.epochCounter or 0) > 300 then
+    if (sgdState.epochCounter or 0) > 200 then
         print("Training complete, go home")
         os.exit()
     end

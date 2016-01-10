@@ -59,7 +59,7 @@ function addResidualLayer2(input,  nChannels, nOutChannels, stride)
    -- Add them together
    net = nn.CAddTable(){net, skip}
    net = cudnn.SpatialBatchNormalization(nOutChannels)(net)
-   --net = cudnn.ReLU(true)(net)
+   net = cudnn.ReLU(true)(net)
    -- ^ don't put a ReLU here! see http://gitxiv.com/comments/7rffyqcPLirEEsmpX
 
    return net
