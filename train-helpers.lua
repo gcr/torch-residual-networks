@@ -66,20 +66,6 @@ function TrainingHelpers.printInspection(inspection)
 end
 
 
-function recordLoss(sgdState, loss_val)
-   sgdState.lossLog = sgdState.lossLog or {}
-   sgdState.lossLog[#sgdState.lossLog + 1] = {
-      sgdState.nSampledImages,
-      loss_val
-   }
-end
-function displayLoss(sgdState, loss_val)
-   workbook:plot("Loss",sgdState.lossLog, {labels={'Images Seen', 'Loss'},
-                      title='Loss',
-                      rollPeriod=10,
-                      showRoller=true,
-                      win=25})
-end
 function displayWeights(model)
     local layers = {}
     -- Go through each module and add its weight and its gradient.
@@ -146,7 +132,7 @@ function evaluateModel(model, datasetTest)
    return {correct1=correct1/total, correct5=correct5/total}
 end
 
-function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdState, epochSize, afterEpoch, filename, snapshotEvery)
+function TrainingHelpers.trainForever(forwardBackwardBatch, weights, sgdState, epochSize, afterEpoch)
    local d = Date{os.date()}
    local modelTag = string.format("%04d%02d%02d-%d",
       d:year(), d:month(), d:day(), torch.random())
@@ -173,35 +159,12 @@ function TrainingHelpers.trainForever(model, forwardBackwardBatch, weights, sgdS
       sgdState.nEvalCounter = sgdState.nEvalCounter + 1
       xlua.progress(sgdState.nSampledImages%epochSize, epochSize)
 
-      recordLoss(sgdState, loss_val)
-      if sgdState.nEvalCounter % 20 == 0 then
-          displayLoss(sgdState, loss_val)
-          displayWeights(model)
-      --     print("\027[KLoss:", loss_val)
-      --     print("Gradients:", gradients:norm())
-      end
-      -- if sgdState.nEvalCounter % 100 == 0 then
-      --     local inspection = TrainingHelpers.inspectModel(model)
-      --     inspection.nSampledImages = sgdState.nSampledImages
-      --     table.insert(sgdState.inspectionLog, inspection)
-      -- end
-      --table.insert(sgdState.lossLog, {loss = loss_val, nSampledImages = sgdState.nSampledImages})
       if math.floor(sgdState.nSampledImages / epochSize) ~= sgdState.epochCounter then
          -- Epoch completed!
          xlua.progress(epochSize, epochSize)
          sgdState.epochCounter = math.floor(sgdState.nSampledImages / epochSize)
          if afterEpoch then afterEpoch() end
-
          print("\n\n----- Epoch "..sgdState.epochCounter.." -----")
-         -- Snapshot model (WARNING: Should be the last thing we do!)
-         if filename and sgdState.epochCounter % (snapshotEvery or 1) == 0 then
-            print("Snapshotting model to "..newFilename)
-            torch.save(newFilename.."-model.tmp", model)
-            os.rename(newFilename.."-model.tmp", newFilename.."-model.t7") -- POSIX guarantees automicity
-            print("Snapshotting sgdState to "..newFilename)
-            torch.save(newFilename.."-sgdState.tmp", sgdState)
-            os.rename(newFilename.."-sgdState.tmp", newFilename.."-sgdState.t7") -- POSIX guarantees automicity
-         end
       end
    end
 end

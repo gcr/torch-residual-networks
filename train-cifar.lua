@@ -6,8 +6,14 @@ require 'cunn'
 require 'cudnn'
 require 'nngraph'
 require 'train-helpers'
-display = require 'display'
-workbook = (require'lab-workbook-for-trello'):newExperiment{experimentName="CIFAR dev"}
+
+-- Feel free to comment these out.
+workbook = require'lab-workbook':newExperiment{}
+lossLog = workbook:newTimeSeriesLog("Training loss",
+                                    {"nImages", "loss"},
+                                    20)
+errorLog = workbook:newTimeSeriesLog("Testing Error",
+                                     {"nImages", "error"})
 
 opt = lapp[[
       --batchSize       (default 128)      Sub-batch size
@@ -78,10 +84,6 @@ end
 
 loss = nn.ClassNLLCriterion()
 loss:cuda()
-
--- Dirty trick: make the first conv layer weights easier to modify
--- model.modules[2].weight:mul(0.5)
-
 
 sgdState = {
    --- For SGD with momentum ---
@@ -174,26 +176,22 @@ function forwardBackwardBatch(batch)
     loss_val = loss_val / N
     gradients:mul( 1.0 / N )
 
-    if sgdState.nEvalCounter % 20 == 0 then
-        display.image(model.modules[2].weight, {win=24, title="First layer weights"})
-    end
+    lossLog{nImages = sgdState.nSampledImages,
+            loss = loss_val}
 
     return loss_val, gradients, inputs:size(1) * N
 end
 
 
 function evalModel()
-    -- if sgdState.epochCounter > 10 then os.exit(1) end
     local results = evaluateModel(model, dataTest)
-    print(results)
-    sgdState.accLog = sgdState.accLog or {}
-    table.insert(sgdState.accLog, {sgdState.nSampledImages or 0, 1.0-results.correct1})
-    workbook:plot("Test Classification Error", sgdState.accLog, {labels={'Images Seen', 'Error'},
-                      title='Test Classification Error',
-                      rollPeriod=1,
-                      })
-    --table.insert(sgdState.accuracies, acc)
-    if (sgdState.epochCounter or 0) > 200 then
+    errorLog{nImages = sgdState.nSampledImages,
+             error = 1.0 - results.correct1}
+    if sgdState.epochCounter % 10 == 0 then
+       workbook:saveTorch("model", model)
+       workbook:saveTorch("sgdState", sgdState)
+    end
+    if (sgdState.epochCounter or 0) > 300 then
         print("Training complete, go home")
         os.exit()
     end
@@ -202,18 +200,13 @@ end
 evalModel()
 
 --[[
-local results = evaluateModel(model, dataVal)
-print(results)
---]]
-
---[[
 require 'graph'
 graph.dot(model.fg, 'MLP', '/tmp/MLP')
 os.execute('convert /tmp/MLP.svg /tmp/MLP.png')
 display.image(image.load('/tmp/MLP.png'), {title="Network Structure", win=23})
 --]]
 
----[[
+--[[
 require 'ncdu-model-explore'
 local y = model:forward(torch.randn(opt.batchSize, 3, 32,32):cuda())
 local df_dw = loss:backward(y, torch.zeros(opt.batchSize):cuda())
@@ -221,16 +214,15 @@ model:backward(torch.randn(opt.batchSize,3,32,32):cuda(), df_dw)
 exploreNcdu(model)
 --]]
 
+-- Begin saving the experiment to our workbook
+workbook:saveGitStatus()
+workbook:saveJSON("opt", opt)
 
 -- --[[
 TrainingHelpers.trainForever(
-model,
 forwardBackwardBatch,
-weights,
 sgdState,
 dataTrain:size(),
-evalModel,
-opt.experimentName,
-10
+evalModel
 )
 --]]
