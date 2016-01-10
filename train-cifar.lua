@@ -18,7 +18,7 @@ errorLog = workbook:newTimeSeriesLog("Testing Error",
 opt = lapp[[
       --batchSize       (default 128)      Sub-batch size
       --iterSize        (default 1)       How many sub-batches in each batch
-      --Nsize           (default 9)       Model has 6*n+2 layers.
+      --Nsize           (default 3)       Model has 6*n+2 layers.
       --dataRoot        (default /mnt/cifar) Data root folder
       --loadFrom        (default "")      Model to load
       --experimentName  (default "snapshots/cifar-residual-experiment1")
@@ -151,7 +151,7 @@ function forwardBackwardBatch(batch)
     -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
     if sgdState.epochCounter < 80 then
         sgdState.learningRate = 0.1
-    elseif sgdState.epochCounter < 160 then
+    elseif sgdState.epochCounter < 120 then
         sgdState.learningRate = 0.01
     else
         sgdState.learningRate = 0.001
@@ -185,7 +185,7 @@ function evalModel()
     local results = evaluateModel(model, dataTest)
     errorLog{nImages = sgdState.nSampledImages,
              error = 1.0 - results.correct1}
-    if sgdState.epochCounter % 10 == 0 then
+    if (sgdState.epochCounter or -1) % 10 == 0 then
        workbook:saveTorch("model", model)
        workbook:saveTorch("sgdState", sgdState)
     end
