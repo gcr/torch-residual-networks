@@ -55,8 +55,6 @@ if opt.loadFrom == "" then
     model = nn.SpatialAveragePooling(8,8)(model)
     model = nn.Reshape(10)(model)
     model = nn.Linear(10, 10)(model)
-    -- batch norm here? yes? no?
-    model = nn.ReLU(true)(model)
     model = nn.LogSoftMax()(model)
 
     model = nn.gModule({input}, {model})
@@ -221,6 +219,7 @@ workbook:saveJSON("opt", opt)
 -- --[[
 TrainingHelpers.trainForever(
 forwardBackwardBatch,
+weights,
 sgdState,
 dataTrain:size(),
 evalModel

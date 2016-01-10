@@ -136,8 +136,6 @@ function TrainingHelpers.trainForever(forwardBackwardBatch, weights, sgdState, e
    local d = Date{os.date()}
    local modelTag = string.format("%04d%02d%02d-%d",
       d:year(), d:month(), d:day(), torch.random())
-   local newFilename = filename.."-"..modelTag
-   print("Saving to "..newFilename)
    sgdState.epochSize = epochSize
    sgdState.epochCounter = sgdState.epochCounter or 0
    sgdState.nSampledImages = sgdState.nSampledImages or 0
