@@ -33,17 +33,31 @@ iterations on the above graph). Like their paper, we start at a
 learning rate of 0.1 and reduce it to 0.01 at 80 epochs and then to
 0.01 at 160 epochs.
 
+###Training loss
 ![Training loss curve](http://i.imgur.com/7ztVYwS.png)
 
+###Testing error (rolling average)
 ![Test error curve](http://i.imgur.com/0NXOxLD.png)
 
-| Paper                                 | Test Error | Reference (Tab. 6) |
+| Model                                 | My Test Error | Reference |Test Error (Tab. 6) |
 |:-------------------------------------:|:--------:|:--------------------:|
 | Nsize=3, 20 layers                    | 0.084473 | 0.875 |
 | Nsize=5, 32 layers                    | 0.079102 | 0.751 |
 | Nsize=7, 44 layers                    | 0.075684 | 0.717 |
 | Nsize=9, 56 layers                    | 0.063477 | 0.697 |
 | Nsize=18, 110 layers, fancy policy¹   | 0.067871 | 0.661² |
+
+All of these results are very unstable, hence the rolling average. I
+really think I only have about one and a half significant figures. I
+do not think it's
+
+- All of these models, except for the smallest, are comparable.
+- For the most part, deeper models seem to perform slightly better.
+  However, I'm not comfortable with rank-ordering the results because
+  of how noisy the test error is. The standard deviation of the test
+  error between epochs 195 and 200 was frequently more than half of a
+  percent. The right thing to do is to re-run the above experiments
+  several times and take the mean result.
 
 ¹: For this run, we started from a learning rate of 0.001 until the
 first 400 iterations. We then raised the learning rate to 0.1 and
