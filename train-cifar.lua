@@ -1,6 +1,6 @@
 require 'residual-layers'
 require 'nn'
-require 'cifar-dataset'
+require 'data.cifar-dataset'
 require 'cutorch'
 require 'cunn'
 require 'cudnn'

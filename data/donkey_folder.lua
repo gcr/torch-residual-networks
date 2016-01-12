@@ -8,7 +8,7 @@
 ]]--
 
 require 'image'
-require 'dataset'
+require 'data.dataset'
 
 -- This file contains the data-loading logic and details.
 -- It is run by each data-loader thread.

@@ -20,7 +20,7 @@ opt = lapp[[
 print(opt)
 
 -- create data loader
-local DataLoader = paths.dofile('data.lua')
+local DataLoader = paths.dofile('data/data.lua')
 dataTrain = DataLoader.new(opt.nThreads, 'folder', {dataRoot = opt.dataTrainRoot,
                                                     fineSize = opt.fineSize,
                                                     loadSize = opt.loadSize,
