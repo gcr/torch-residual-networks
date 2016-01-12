@@ -183,13 +183,13 @@ end
 
 function evalModel()
     local results = evaluateModel(model, dataTest)
-    errorLog{nImages = sgdState.nSampledImages,
+    errorLog{nImages = sgdState.nSampledImages or 0,
              error = 1.0 - results.correct1}
     if (sgdState.epochCounter or -1) % 10 == 0 then
        workbook:saveTorch("model", model)
        workbook:saveTorch("sgdState", sgdState)
     end
-    if (sgdState.epochCounter or 0) > 300 then
+    if (sgdState.epochCounter or 0) > 200 then
         print("Training complete, go home")
         os.exit()
     end
