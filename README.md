@@ -13,12 +13,10 @@ How to use
 - You need at least CUDA 7.0 and CuDNN v4.
 - Install Torch.
 - Install the Torch CUDNN V4 library: `git clone https://github.com/soumith/cudnn.torch; cd cudnn; git co R4; luarocks make` This will give you `cudnn.SpatialBatchNormalization`, which helps save quite a lot of memory.
+- Install nninit: `luarocks install nninit`.
 - Download
   [CIFAR 10](http://torch7.s3-website-us-east-1.amazonaws.com/data/cifar-10-torch.tar.gz).
-  The code expects the files to be located in
-  `/mnt/cifar/data_batch_*.t7`
-- Comment out all the `workbook` calls. You should replace them with
-  your own reporting and model saving code.
+  Use `--dataRoot <cifar>` to specify the location of the extracted CIFAR 10 folder.
 - Run `train-cifar.lua`.
 
 CIFAR: Effect of model size

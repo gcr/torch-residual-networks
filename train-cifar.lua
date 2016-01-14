@@ -28,12 +28,15 @@ require 'nngraph'
 require 'train-helpers'
 
 -- Feel free to comment these out.
-workbook = require'lab-workbook':newExperiment{}
-lossLog = workbook:newTimeSeriesLog("Training loss",
-                                    {"nImages", "loss"},
-                                    20)
-errorLog = workbook:newTimeSeriesLog("Testing Error",
-                                     {"nImages", "error"})
+hasWorkbook, labWorkbook = pcall(require, 'lab-workbook')
+if hasWorkbook then
+  workbook = labWorkbook:newExperiment{}
+  lossLog = workbook:newTimeSeriesLog("Training loss",
+                                      {"nImages", "loss"},
+                                      20)
+  errorLog = workbook:newTimeSeriesLog("Testing Error",
+                                       {"nImages", "error"})
+end
 
 opt = lapp[[
       --batchSize       (default 128)      Sub-batch size
@@ -80,19 +83,6 @@ if opt.loadFrom == "" then
     model = nn.gModule({input}, {model})
     model:cuda()
     --print(#model:forward(torch.randn(100, 3, 32,32):cuda()))
-
-    model:apply(function(m)
-        -- Initialize weights
-        local name = torch.type(m)
-        if name:find('Convolution') then
-            m.weight:normal(0.0, math.sqrt(2/(m.nInputPlane*m.kW*m.kH)))
-            m.bias:fill(0)
-        elseif name:find('BatchNormalization') then
-            if m.weight then m.weight:normal(1.0, 0.002) end
-            if m.bias then m.bias:fill(0) end
-        end
-    end)
-
 else
     print("Loading model from "..opt.loadFrom)
     cutorch.setDevice(1)
@@ -194,8 +184,10 @@ function forwardBackwardBatch(batch)
     loss_val = loss_val / N
     gradients:mul( 1.0 / N )
 
-    lossLog{nImages = sgdState.nSampledImages,
-            loss = loss_val}
+    if hasWorkbook then
+      lossLog{nImages = sgdState.nSampledImages,
+              loss = loss_val}
+    end
 
     return loss_val, gradients, inputs:size(1) * N
 end
@@ -203,11 +195,13 @@ end
 
 function evalModel()
     local results = evaluateModel(model, dataTest)
-    errorLog{nImages = sgdState.nSampledImages,
-             error = 1.0 - results.correct1}
-    if (sgdState.epochCounter or -1) % 10 == 0 then
-       workbook:saveTorch("model", model)
-       workbook:saveTorch("sgdState", sgdState)
+    if hasWorkbook then
+      errorLog{nImages = sgdState.nSampledImages,
+               error = 1.0 - results.correct1}
+      if (sgdState.epochCounter or -1) % 10 == 0 then
+        workbook:saveTorch("model", model)
+        workbook:saveTorch("sgdState", sgdState)
+      end
     end
     if (sgdState.epochCounter or 0) > 300 then
         print("Training complete, go home")
@@ -233,8 +227,10 @@ exploreNcdu(model)
 --]]
 
 -- Begin saving the experiment to our workbook
-workbook:saveGitStatus()
-workbook:saveJSON("opt", opt)
+if hasWorkbook then
+  workbook:saveGitStatus()
+  workbook:saveJSON("opt", opt)
+end
 
 -- --[[
 TrainingHelpers.trainForever(

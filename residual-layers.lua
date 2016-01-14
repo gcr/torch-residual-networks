@@ -22,6 +22,7 @@ require 'nn'
 require 'nngraph'
 require 'cudnn'
 require 'cunn'
+local nninit = require 'nninit'
 
 function addResidualLayer2(input,  nChannels, nOutChannels, stride)
    --[[
@@ -50,11 +51,17 @@ function addResidualLayer2(input,  nChannels, nOutChannels, stride)
    -- Path 1: Convolution
    -- The first layer does the downsampling and the striding
    local net = cudnn.SpatialConvolution(nChannels, nOutChannels,
-                                           3,3, stride,stride, 1,1)(input)
-   net = cudnn.SpatialBatchNormalization(nOutChannels)(net)
+                                           3,3, stride,stride, 1,1)
+                                           :init('weight', nninit.kaiming, {gain = 'relu'})
+                                           :init('bias', nninit.constant, 0)(input)
+   net = cudnn.SpatialBatchNormalization(nOutChannels)
+                                            :init('weight', nninit.normal, 1.0, 0.002)
+                                            :init('bias', nninit.constant, 0)(net)
    net = cudnn.ReLU(true)(net)
    net = cudnn.SpatialConvolution(nOutChannels, nOutChannels,
-                                      3,3, 1,1, 1,1)(net)
+                                      3,3, 1,1, 1,1)
+                                      :init('weight', nninit.kaiming, {gain = 'relu'})
+                                      :init('bias', nninit.constant, 0)(net)
    -- Should we put Batch Normalization here? I think not, because
    -- BN would force the output to have unit variance, which breaks the residual
    -- property of the network.
