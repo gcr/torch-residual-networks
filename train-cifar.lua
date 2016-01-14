@@ -211,8 +211,10 @@ function forwardBackwardBatch(batch)
     loss_val = loss_val / N
     gradients:mul( 1.0 / N )
 
-    lossLog{nImages = sgdState.nSampledImages,
-            loss = loss_val}
+    if hasWorkbook then
+      lossLog{nImages = sgdState.nSampledImages,
+              loss = loss_val}
+    end
 
     return loss_val, gradients, inputs:size(1) * N
 end
@@ -220,11 +222,13 @@ end
 
 function evalModel()
     local results = evaluateModel(model, dataTest, opt.batchSize)
-    errorLog{nImages = sgdState.nSampledImages or 0,
-             error = 1.0 - results.correct1}
-    if hasWorkbook and (sgdState.epochCounter or -1) % 10 == 0 then
-       workbook:saveTorch("model", model)
-       workbook:saveTorch("sgdState", sgdState)
+    if hasWorkbook then
+      errorLog{nImages = sgdState.nSampledImages or 0,
+               error = 1.0 - results.correct1}
+      if (sgdState.epochCounter or -1) % 10 == 0 then
+        workbook:saveTorch("model", model)
+        workbook:saveTorch("sgdState", sgdState)
+      end
     end
     if (sgdState.epochCounter or 0) > 200 then
         print("Training complete, go home")
