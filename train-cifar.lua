@@ -63,18 +63,17 @@ if opt.loadFrom == "" then
     model = cudnn.SpatialBatchNormalization(16)(model)
     model = cudnn.ReLU(true)(model)
     ------> 16, 32,32   First Group
-    for i=1,N-1 do   model = addResidualLayer2(model, 16)   end
-    model = addResidualLayer2(model, 16, 32, 2)
+    for i=1,N do   model = addResidualLayer2(model, 16)   end
     ------> 32, 16,16   Second Group
+    model = addResidualLayer2(model, 16, 32, 2)
     for i=1,N-1 do   model = addResidualLayer2(model, 32)   end
-    model = addResidualLayer2(model, 32, 64, 2)
     ------> 64, 8,8     Third Group
+    model = addResidualLayer2(model, 32, 64, 2)
     for i=1,N-1 do   model = addResidualLayer2(model, 64)   end
-    model = addResidualLayer2(model, 64, 10, 1)
     ------> 10, 8,8     Pooling, Linear, Softmax
     model = nn.SpatialAveragePooling(8,8)(model)
-    model = nn.Reshape(10)(model)
-    model = nn.Linear(10, 10)(model)
+    model = nn.Reshape(64)(model)
+    model = nn.Linear(64, 10)(model)
     model = nn.LogSoftMax()(model)
 
     model = nn.gModule({input}, {model})
