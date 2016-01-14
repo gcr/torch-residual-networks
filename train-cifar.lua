@@ -170,6 +170,18 @@ function forwardBackwardBatch(batch)
     model:training()
     gradients:zero()
 
+    --[[
+    -- Reset BN momentum, nvidia-style
+    model:apply(function(m)
+        if torch.type(m):find('BatchNormalization') then
+            m.momentum = 1.0  / ((m.count or 0) + 1)
+            m.count = (m.count or 0) + 1
+            print("--Resetting BN momentum to", m.momentum)
+            print("-- Running mean is", m.running_mean:mean(), "+-", m.running_mean:std())
+        end
+    end)
+    --]]
+
     -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
     if sgdState.epochCounter < 80 then
         sgdState.learningRate = 0.1
@@ -207,6 +219,13 @@ function evalModel()
     local results = evaluateModel(model, dataTest)
     errorLog{nImages = sgdState.nSampledImages or 0,
              error = 1.0 - results.correct1}
+    --[[
+    model:apply(function(m)
+        if torch.type(m):find('BatchNormalization') then
+            m.count = 0
+        end
+    end)
+    --]]
     if (sgdState.epochCounter or -1) % 10 == 0 then
        workbook:saveTorch("model", model)
        workbook:saveTorch("sgdState", sgdState)
