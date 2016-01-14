@@ -118,7 +118,7 @@ sgdState = {
    --]]
    --- For rmsprop, which is very fiddly and I don't trust it at all ---
    --[[
-   learningRate = 1e-5,
+   learningRate = "Will be set later",
    alpha = 0.9,
    whichOptimMethod = 'rmsprop',
    --]]
@@ -129,7 +129,7 @@ sgdState = {
    --]]
    --- For adagrad, which also sucks ---
    --[[
-   learningRate = 3e-4,
+   learningRate = "Will be set later",
    whichOptimMethod = 'adagrad',
    --]]
    --- For adam, which also sucks ---
@@ -144,6 +144,9 @@ sgdState = {
    momentum = 0.9,
    whichOptimMethod = 'nag',
    --]]
+   --
+
+   --whichOptimMethod = opt.whichOptimMethod,
 }
 
 
