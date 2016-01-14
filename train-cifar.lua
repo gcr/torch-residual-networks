@@ -28,13 +28,15 @@ require 'nngraph'
 require 'train-helpers'
 
 -- Feel free to comment these out.
-workbook = require'lab-workbook':newExperiment{}
-os.execute("tmux rename-window "..workbook.tag)
-lossLog = workbook:newTimeSeriesLog("Training loss",
-                                    {"nImages", "loss"},
-                                    100)
-errorLog = workbook:newTimeSeriesLog("Testing Error",
-                                     {"nImages", "error"})
+hasWorkbook, labWorkbook = pcall(require, 'lab-workbook')
+if hasWorkbook then
+  workbook = labWorkbook:newExperiment{}
+  lossLog = workbook:newTimeSeriesLog("Training loss",
+                                      {"nImages", "loss"},
+                                      100)
+  errorLog = workbook:newTimeSeriesLog("Testing Error",
+                                       {"nImages", "error"})
+end
 
 opt = lapp[[
       --batchSize       (default 128)      Sub-batch size
@@ -220,14 +222,7 @@ function evalModel()
     local results = evaluateModel(model, dataTest, opt.batchSize)
     errorLog{nImages = sgdState.nSampledImages or 0,
              error = 1.0 - results.correct1}
-    --[[
-    model:apply(function(m)
-        if torch.type(m):find('BatchNormalization') then
-            m.count = 0
-        end
-    end)
-    --]]
-    if (sgdState.epochCounter or -1) % 10 == 0 then
+    if hasWorkbook and (sgdState.epochCounter or -1) % 10 == 0 then
        workbook:saveTorch("model", model)
        workbook:saveTorch("sgdState", sgdState)
     end
@@ -255,8 +250,10 @@ exploreNcdu(model)
 --]]
 
 -- Begin saving the experiment to our workbook
-workbook:saveGitStatus()
-workbook:saveJSON("opt", opt)
+if hasWorkbook then
+  workbook:saveGitStatus()
+  workbook:saveJSON("opt", opt)
+end
 
 -- --[[
 TrainingHelpers.trainForever(
