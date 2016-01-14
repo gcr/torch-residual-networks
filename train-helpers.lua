@@ -22,15 +22,17 @@ freely, subject to the following restrictions:
 require 'optim'
 TrainingHelpers = {}
 
-function evaluateModel(model, datasetTest)
+function evaluateModel(model, datasetTest, batchSize)
    print("Evaluating...")
    model:evaluate()
    local correct1 = 0
    local correct5 = 0
    local total = 0
-   while total < datasetTest:size() do
+   local batches = torch.range(1, datasetTest:size()):long():split(batchSize)
+   for i=1,#batches do
        collectgarbage(); collectgarbage();
-       local batch, labels = datasetTest:getBatch()
+       local results = datasetTest:sampleIndices(nil, batches[i])
+       local batch, labels = results.inputs, results.outputs
        labels = labels:long()
        local y = model:forward(batch:cuda()):float()
        local _, indices = torch.sort(y, 2, true)

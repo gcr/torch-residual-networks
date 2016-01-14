@@ -29,9 +29,10 @@ require 'train-helpers'
 
 -- Feel free to comment these out.
 workbook = require'lab-workbook':newExperiment{}
+os.execute("tmux rename-window "..workbook.tag)
 lossLog = workbook:newTimeSeriesLog("Training loss",
                                     {"nImages", "loss"},
-                                    20)
+                                    100)
 errorLog = workbook:newTimeSeriesLog("Testing Error",
                                      {"nImages", "error"})
 
@@ -216,7 +217,7 @@ end
 
 
 function evalModel()
-    local results = evaluateModel(model, dataTest)
+    local results = evaluateModel(model, dataTest, opt.batchSize)
     errorLog{nImages = sgdState.nSampledImages or 0,
              error = 1.0 - results.correct1}
     --[[
