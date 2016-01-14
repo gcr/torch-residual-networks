@@ -82,19 +82,6 @@ if opt.loadFrom == "" then
     model = nn.gModule({input}, {model})
     model:cuda()
     --print(#model:forward(torch.randn(100, 3, 32,32):cuda()))
-
-    model:apply(function(m)
-        -- Initialize weights
-        local name = torch.type(m)
-        if name:find('Convolution') then
-            m.weight:normal(0.0, math.sqrt(2/(m.nInputPlane*m.kW*m.kH)))
-            m.bias:fill(0)
-        elseif name:find('BatchNormalization') then
-            if m.weight then m.weight:normal(1.0, 0.002) end
-            if m.bias then m.bias:fill(0) end
-        end
-    end)
-
 else
     print("Loading model from "..opt.loadFrom)
     cutorch.setDevice(1)
