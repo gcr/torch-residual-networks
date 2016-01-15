@@ -8,6 +8,15 @@ This is a Torch implementation of ["Deep Residual Learning for Image Recognition
 **What's not working yet:** Imagenet. I also have only implemented Option
 (A) for the residual network bottleneck strategy.
 
+Changes
+-------
+- 2016-01-15:
+  - **New CIFAR results**: I re-ran all the CIFAR experiments and
+  updated the results. There were a few bugs: we were only testing on
+  the first 2,000 images in the training set, and they were sampled
+  with replacement. These new results are much more stable over time.
+- 2016-01-12: Release results of CIFAR experiments.
+
 How to use
 ----------
 - You need at least CUDA 7.0 and CuDNN v4.
@@ -34,20 +43,22 @@ learning rate of 0.1 and reduce it to 0.01 at 80 epochs and then to
 0.01 at 160 epochs.
 
 ###Training loss
-![Training loss curve](http://i.imgur.com/7ztVYwS.png)
+![Training loss curve](http://i.imgur.com/XqKnNX1.png)
 
-###Testing error (rolling average)
-![Test error curve](http://i.imgur.com/0NXOxLD.png)
+###Testing error
+![Test error curve](http://i.imgur.com/lt2D5cA.png)
 
 | Model                                 | My Test Error | Reference Test Error from Tab. 6 |
 |:-------------------------------------:|:--------:|:--------------------:|
-| Nsize=3, 20 layers                    | 0.084473 | 0.875 |
-| Nsize=5, 32 layers                    | 0.079102 | 0.751 |
-| Nsize=7, 44 layers                    | 0.075684 | 0.717 |
-| Nsize=9, 56 layers                    | 0.063477 | 0.697 |
-| Nsize=18, 110 layers, fancy policy¹   | 0.067871 | 0.661² |
+| Nsize=3, 20 layers                    | 0.0829 | 0.0875 |
+| Nsize=5, 32 layers                    | 0.0763 | 0.0751 |
+| Nsize=7, 44 layers                    | 0.0714 | 0.0717 |
+| Nsize=9, 56 layers                    | 0.0694 | 0.0697 |
+| Nsize=18, 110 layers, fancy policy¹   | 0.0673 | 0.0661² |
 
-All of these results are very unstable, hence the rolling average. I really think I only have about one and a half significant figures. **The standard deviation of the test error between epochs 195 and 200 was frequently more than half of a percent,** so it probably isn't appropriate to rank-order the results. The right thing to do is to re-run the above experiments several times and take the mean result.
+We can reproduce the results from the paper to typically within 0.5%.
+In all cases except for the 32-layer network, we achieve very slightly
+improved performance, though this may just be noise.
 
 ¹: For this run, we started from a learning rate of 0.001 until the
 first 400 iterations. We then raised the learning rate to 0.1 and
@@ -57,8 +68,8 @@ trained as usual. This is consistent with the actual paper's results.
 the mean. I consider the mean to be a valid test protocol, but I don't
 like reporting the 'best' score because this is effectively training
 on the test set. (This method of reporting effectively introduces an
-extra parameter into the model--which model from an ensemble to
-use--and this parameter is fitted to the test set)
+extra parameter into the model--which model to use from the
+ensemble--and this parameter is fitted to the test set)
 
 CIFAR: Effect of model architecture
 -----------------------------------
@@ -105,31 +116,27 @@ smallest (20-layer) residual network model.
 
 (Note: The other experiments all use the leftmost "Reference" model.)
 
-![Training loss](http://i.imgur.com/DyTIfIx.png)
+![Training loss](http://i.imgur.com/qDDLZLQ.png)
 
-![Testing error](http://i.imgur.com/79Vzxe8.png)
+![Testing error](http://i.imgur.com/fTY6TL5.png)
 
-| Architecture  | Test error |
-|:-------------:|:----------:|
-| ReLU, BN after add                  | 0.083496 |
-| No ReLU, BN before add              | 0.089355 |
-| No ReLU, BN after add               | 0.079102 |
-| ReLU, BN before add (ORIG PAPER)    | 0.084473 |
+| Architecture                        | Test error |
+|:-----------------------------------:|:----------:|
+| ReLU, BN before add (ORIG PAPER)    | 0.0829 |
+| No ReLU, BN before add              | 0.0862 |
+| ReLU, BN after add                  | 0.0834 |
+| No ReLU, BN after add               | 0.0823 |
 
-All methods achieve accuracies within about 2% of each other. Removing
-ReLU and moving the batch normalization after the addition seems to
-make a small improvement, but it's clear that the test error curve is
-too noisy to rank order these methods.
-
-Zooming in to the beginning of the loss curve reveals that the "ReLU,
-BN after add" architecture begins converging slower than the other
-ones, but it eventually achieves comparable performance.
-
-![Training loss](http://i.imgur.com/XYiD6A8.png)
-
+All methods achieve accuracies within about 0.5% of each other.
+Removing ReLU and moving the batch normalization after the addition
+seems to make a small improvement on CIFAR, but there is too much
+noise in the test error curve to reliably tell a difference.
 
 TODO: Alternate training strategies (RMSPROP, Adawhatever)
 ----------------------------------------------------------
 
 TODO: Effect of preprocessing
 -----------------------------
+
+TODO: Effect of batch norm momentum
+-----------------------------------
