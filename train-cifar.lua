@@ -26,6 +26,7 @@ require 'cunn'
 require 'cudnn'
 require 'nngraph'
 require 'train-helpers'
+local nninit = require 'nninit'
 
 -- Feel free to comment these out.
 hasWorkbook, labWorkbook = pcall(require, 'lab-workbook')
@@ -36,6 +37,8 @@ if hasWorkbook then
                                       100)
   errorLog = workbook:newTimeSeriesLog("Testing Error",
                                        {"nImages", "error"})
+else
+  print "WARNING: No workbook support. No results will be saved."
 end
 
 opt = lapp[[
@@ -62,7 +65,9 @@ local N = opt.Nsize
 if opt.loadFrom == "" then
     input = nn.Identity()()
     ------> 3, 32,32
-    model = cudnn.SpatialConvolution(3, 16, 3,3, 1,1, 1,1)(input)
+    model = cudnn.SpatialConvolution(3, 16, 3,3, 1,1, 1,1)
+                :init('weight', nninit.kaiming, {gain = 'relu'})
+                :init('bias', nninit.constant, 0)(input)
     model = cudnn.SpatialBatchNormalization(16)(model)
     model = cudnn.ReLU(true)(model)
     ------> 16, 32,32   First Group
