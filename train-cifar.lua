@@ -29,9 +29,10 @@ require 'train-helpers'
 
 -- Feel free to comment these out.
 workbook = require'lab-workbook':newExperiment{}
+os.execute("tmux rename-window "..workbook.tag)
 lossLog = workbook:newTimeSeriesLog("Training loss",
                                     {"nImages", "loss"},
-                                    20)
+                                    100)
 errorLog = workbook:newTimeSeriesLog("Testing Error",
                                      {"nImages", "error"})
 
@@ -63,18 +64,17 @@ if opt.loadFrom == "" then
     model = cudnn.SpatialBatchNormalization(16)(model)
     model = cudnn.ReLU(true)(model)
     ------> 16, 32,32   First Group
-    for i=1,N-1 do   model = addResidualLayer2(model, 16)   end
-    model = addResidualLayer2(model, 16, 32, 2)
+    for i=1,N do   model = addResidualLayer2(model, 16)   end
     ------> 32, 16,16   Second Group
+    model = addResidualLayer2(model, 16, 32, 2)
     for i=1,N-1 do   model = addResidualLayer2(model, 32)   end
-    model = addResidualLayer2(model, 32, 64, 2)
     ------> 64, 8,8     Third Group
+    model = addResidualLayer2(model, 32, 64, 2)
     for i=1,N-1 do   model = addResidualLayer2(model, 64)   end
-    model = addResidualLayer2(model, 64, 10, 1)
     ------> 10, 8,8     Pooling, Linear, Softmax
     model = nn.SpatialAveragePooling(8,8)(model)
-    model = nn.Reshape(10)(model)
-    model = nn.Linear(10, 10)(model)
+    model = nn.Reshape(64)(model)
+    model = nn.Linear(64, 10)(model)
     model = nn.LogSoftMax()(model)
 
     model = nn.gModule({input}, {model})
@@ -119,7 +119,7 @@ sgdState = {
    --]]
    --- For rmsprop, which is very fiddly and I don't trust it at all ---
    --[[
-   learningRate = 1e-5,
+   learningRate = "Will be set later",
    alpha = 0.9,
    whichOptimMethod = 'rmsprop',
    --]]
@@ -130,7 +130,7 @@ sgdState = {
    --]]
    --- For adagrad, which also sucks ---
    --[[
-   learningRate = 3e-4,
+   learningRate = "Will be set later",
    whichOptimMethod = 'adagrad',
    --]]
    --- For adam, which also sucks ---
@@ -145,6 +145,9 @@ sgdState = {
    momentum = 0.9,
    whichOptimMethod = 'nag',
    --]]
+   --
+
+   --whichOptimMethod = opt.whichOptimMethod,
 }
 
 
@@ -167,6 +170,18 @@ function forwardBackwardBatch(batch)
     --   - Zero the gradient parameters so we can accumulate them again.
     model:training()
     gradients:zero()
+
+    --[[
+    -- Reset BN momentum, nvidia-style
+    model:apply(function(m)
+        if torch.type(m):find('BatchNormalization') then
+            m.momentum = 1.0  / ((m.count or 0) + 1)
+            m.count = (m.count or 0) + 1
+            print("--Resetting BN momentum to", m.momentum)
+            print("-- Running mean is", m.running_mean:mean(), "+-", m.running_mean:std())
+        end
+    end)
+    --]]
 
     -- From https://github.com/bgshih/cifar.torch/blob/master/train.lua#L119-L128
     if sgdState.epochCounter < 80 then
@@ -202,9 +217,16 @@ end
 
 
 function evalModel()
-    local results = evaluateModel(model, dataTest)
+    local results = evaluateModel(model, dataTest, opt.batchSize)
     errorLog{nImages = sgdState.nSampledImages or 0,
              error = 1.0 - results.correct1}
+    --[[
+    model:apply(function(m)
+        if torch.type(m):find('BatchNormalization') then
+            m.count = 0
+        end
+    end)
+    --]]
     if (sgdState.epochCounter or -1) % 10 == 0 then
        workbook:saveTorch("model", model)
        workbook:saveTorch("sgdState", sgdState)

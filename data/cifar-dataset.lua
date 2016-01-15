@@ -6,7 +6,7 @@ local CIFAR, parent = torch.class("Dataset.CIFAR")
 
 function CIFAR:__init(path, mode, batchSize)
    local trsize = 50000
-   local tesize = 2000
+   local tesize = 10000
    self.batchSize = batchSize
    self.mode = mode
 
