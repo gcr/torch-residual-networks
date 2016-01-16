@@ -130,11 +130,78 @@ Removing ReLU and moving the batch normalization after the addition
 seems to make a small improvement on CIFAR, but there is too much
 noise in the test error curve to reliably tell a difference.
 
-TODO: Alternate training strategies (RMSPROP, Adawhatever)
+Alternate training strategies (RMSPROP, Adagrad, Adadelta)
 ----------------------------------------------------------
 
-TODO: Effect of preprocessing
+Can we improve on the basic SGD update rule with Nesterov momentum?
+This experiment aims to find out. Common wisdom suggests that
+alternate update rules may converge faster, at least initially, but
+they do not outperform well-tuned SGD in the long run.
+
+![Training loss curve](http://i.imgur.com/0ZxQZ7k.png)
+
+![Testing error curve](http://i.imgur.com/oLzwLDo.png)
+
+In our experiments, vanilla SGD with Nesterov momentum and a learning
+rate of 0.1 eventually reaches the lowest test error. Interestingly,
+RMSPROP with learning rate 1e-2 achieves a lower training loss, but
+overfits.
+
+| Strategy                                      | Test error |
+|:---------------------------------------------:|:----------:|
+| Original paper: SGD + Nesterov momentum, 1e-1 | 0.0829     |
+| RMSprop, learrning rate = 1e-4                | 0.1677     |
+| RMSprop, 1e-3                                 | 0.1055     |
+| RMSprop, 1e-2                                 | 0.0945     |
+| Adadelta¹, rho = 0.3                          | 0.1093     |
+| Adagrad, 1e-3                                 | 0.3536     |
+| Adagrad, 1e-2                                 | 0.1603     |
+| Adagrad, 1e-1                                 | 0.1255     |
+
+¹: Adadelta does not use a learning rate, so we did not use the same
+learning rate policy as in the paper. We just let it run until
+convergence.
+
+See
+[Andrej Karpathy's CS231N notes](https://cs231n.github.io/neural-networks-3/#update)
+for more details on each of these learning strategies.
+
+Effect of batch norm momentum
 -----------------------------
 
-TODO: Effect of batch norm momentum
------------------------------------
+For our experiments, we use batch normalization using an exponential
+running mean and standard deviation with a momentum of 0.1, meaning
+that the running mean and std changes by 10% of its value at each
+batch. A value of 1.0 would cause the batch normalization layer to
+calculate the mean and standard deviation across only the current
+batch, and a value of 0 would cause the batch normalization layer to
+stop accumulating changes in the running mean and standard deviation.
+
+The strictest interpretation of the original batch normalization paper
+is to calculate the mean and standard deviation across the entire
+training set at every update. This takes too long in practice, so the
+exponential average is usually used instead.
+
+We attempt to see whether batch normalization momentum affects
+anything. We try different values away from the default, along with a
+"dynamic" update strategy that sets the momentum to 1 / (1+n), where n
+is the number of batches seen so far (N resets to 0 at every epoch).
+At the end of training for a certain epoch, this means the batch
+normalization's running mean and standard deviation is effectively
+calculated over the entire training set.
+
+None of these effects appear to make a significant difference.
+
+![Test error curve](http://i.imgur.com/3M1P79N.png)
+
+| Strategy | Accuracy |
+|:----:|:----:|
+| BN, momentum = 1 just for fun      |  0.0863 |
+| BN, momentum = 0.01                |  0.0835 |
+| Original paper: BN momentum = 0.1  |  0.0829 |
+| Dynamic, reset every epoch.        |  0.0822 |
+
+
+
+TODO: Imagenet
+--------------
