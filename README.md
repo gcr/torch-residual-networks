@@ -60,7 +60,7 @@ learning rate of 0.1 and reduce it to 0.01 at 80 epochs and then to
 ![Test error curve](http://i.imgur.com/lt2D5cA.png)
 
 | Model                                 | My Test Error | Reference Test Error from Tab. 6 | Artifacts |
-|:--:|:--:|:--:|:--:|
+|--|--|--|--|
 | Nsize=3, 20 layers                    | 0.0829 | 0.0875 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Source.git-patch) |
 | Nsize=5, 32 layers                    | 0.0763 | 0.0751 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Source.git-patch) |
 | Nsize=7, 44 layers                    | 0.0714 | 0.0717 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Source.git-patch) |
@@ -132,7 +132,7 @@ smallest (20-layer) residual network model.
 ![Testing error](http://i.imgur.com/fTY6TL5.png)
 
 | Architecture                        | Test error |
-|:-----------------------------------:|:----------:|
+|-----------------------------------|----------|
 | ReLU, BN before add (ORIG PAPER reimplementation)    | 0.0829 |
 | No ReLU, BN before add              | 0.0862 |
 | ReLU, BN after add                  | 0.0834 |
@@ -170,7 +170,7 @@ Results:
   give a small improvement (~0.6%)
 
 | Architecture                        | Test error | Artifacts |
-|:-----------------------------------:|:----------:|:---:|
+|-----------------------------------|----------|---|
 | ReLU, BN before add (ORIG PAPER reimplementation)    |  0.0697 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Source.git-patch) |
 | No ReLU, BN before add              |  0.0632 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Source.git-patch) |
 | ReLU, BN after add                  |  0.1356 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Source.git-patch) |
@@ -195,7 +195,7 @@ RMSPROP with learning rate 1e-2 achieves a lower training loss, but
 overfits.
 
 | Strategy                                      | Test error |
-|:---------------------------------------------:|:----------:|
+|---------------------------------------------|----------|
 | Original paper: SGD + Nesterov momentum, 1e-1 | 0.0829     |
 | RMSprop, learrning rate = 1e-4                | 0.1677     |
 | RMSprop, 1e-3                                 | 0.1055     |
@@ -242,7 +242,7 @@ None of these effects appear to make a significant difference.
 ![Test error curve](http://i.imgur.com/3M1P79N.png)
 
 | Strategy | Accuracy |
-|:----:|:----:|
+|----|----|
 | BN, momentum = 1 just for fun      |  0.0863 |
 | BN, momentum = 0.01                |  0.0835 |
 | Original paper: BN momentum = 0.1  |  0.0829 |
