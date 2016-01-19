@@ -8,8 +8,20 @@ This is a Torch implementation of ["Deep Residual Learning for Image Recognition
 **What's not working yet:** Imagenet. I also have only implemented Option
 (A) for the residual network bottleneck strategy.
 
+Table of contents
+-----------------
+
+- [CIFAR: Effect of model size](#cifar-effect-of-model-size)
+- [CIFAR: Effect of model architecture on shallow networks](#cifar-effect-of-model-architecture)
+  - [...on deep networks](#cifar-effect-of-model-architecture-on-deep-networks)
+- [CIFAR: Effect of alternate solvers (RMSprop, Adagrad, Adadelta)](#alternate-training-strategies-rmsprop-adagrad-adadelta)
+- [CIFAR: Effect of batch normalization momentum](#effect-of-batch-norm-momentum)
+
 Changes
 -------
+- 2016-01-19:
+  - **New results**: Re-ran the 'alternate building block' results on deeper networks. They have more of an effect.
+  - Added a table of contents to avoid getting lost.
 - 2016-01-15:
   - **New CIFAR results**: I re-ran all the CIFAR experiments and
   updated the results. There were a few bugs: we were only testing on
