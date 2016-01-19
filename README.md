@@ -120,7 +120,7 @@ smallest (20-layer) residual network model.
 
 | Architecture                        | Test error |
 |:-----------------------------------:|:----------:|
-| ReLU, BN before add (ORIG PAPER)    | 0.0829 |
+| ReLU, BN before add (ORIG PAPER reimplementation)    | 0.0829 |
 | No ReLU, BN before add              | 0.0862 |
 | ReLU, BN after add                  | 0.0834 |
 | No ReLU, BN after add               | 0.0823 |
@@ -129,6 +129,40 @@ All methods achieve accuracies within about 0.5% of each other.
 Removing ReLU and moving the batch normalization after the addition
 seems to make a small improvement on CIFAR, but there is too much
 noise in the test error curve to reliably tell a difference.
+
+CIFAR: Effect of model architecture on deep networks
+----------------------------------------------------
+
+The above experiments on the 20-layer networks do not reveal any
+interesting differences. However, these differences become more
+pronounced when evaluated on very deep networks. We retry the above
+experiments on 110-layer (Nsize=19) networks.
+
+![Training loss](http://i.imgur.com/RANDrXl.png)
+
+![Testing error](http://i.imgur.com/sldN4cK.png)
+
+Results:
+
+- For deep networks, **it's best to put the batch normalization before
+  the addition part of each building block layer**. This effectively
+  removes most of the batch normalization operations from the input
+  skip paths. If a batch normalization comes after each building
+  block, then there exists a path from the input straight to the
+  output that passes through several batch normalizations in a row.
+  This could be problematic because each BN is not idempotent (the
+  effects of several BN layers accumulate).
+
+- Removing the ReLU layer at the end of each building block appears to
+  give a small improvement (~0.6%)
+
+| Architecture                        | Test error |
+|:-----------------------------------:|:----------:|
+| ReLU, BN before add (ORIG PAPER reimplementation)    |  0.0697 |
+| No ReLU, BN before add              |  0.0632 |
+| ReLU, BN after add                  |  0.1356 |
+| No ReLU, BN after add               |  0.1230 |
+
 
 Alternate training strategies (RMSPROP, Adagrad, Adadelta)
 ----------------------------------------------------------
