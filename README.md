@@ -21,7 +21,8 @@ Changes
 -------
 - 2016-01-19:
   - **New results**: Re-ran the 'alternate building block' results on deeper networks. They have more of an effect.
-  - Added a table of contents to avoid getting lost.
+  - **Added a table of contents** to avoid getting lost.
+  - **Added experimental artifacts** (log of training loss and test error, the saved model, the any patches used on the source code, etc) for two of the more interesting experiments, for curious folks who want to reproduce our results. (These artifacts are hereby released under the zlib license.)
 - 2016-01-15:
   - **New CIFAR results**: I re-ran all the CIFAR experiments and
   updated the results. There were a few bugs: we were only testing on
@@ -58,13 +59,13 @@ learning rate of 0.1 and reduce it to 0.01 at 80 epochs and then to
 ###Testing error
 ![Test error curve](http://i.imgur.com/lt2D5cA.png)
 
-| Model                                 | My Test Error | Reference Test Error from Tab. 6 |
-|:-------------------------------------:|:--------:|:--------------------:|
-| Nsize=3, 20 layers                    | 0.0829 | 0.0875 |
-| Nsize=5, 32 layers                    | 0.0763 | 0.0751 |
-| Nsize=7, 44 layers                    | 0.0714 | 0.0717 |
-| Nsize=9, 56 layers                    | 0.0694 | 0.0697 |
-| Nsize=18, 110 layers, fancy policy¹   | 0.0673 | 0.0661² |
+| Model                                 | My Test Error | Reference Test Error from Tab. 6 | Artifacts |
+|:--:|:--:|:--:|:--:|
+| Nsize=3, 20 layers                    | 0.0829 | 0.0875 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Source.git-patch) |
+| Nsize=5, 32 layers                    | 0.0763 | 0.0751 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Source.git-patch) |
+| Nsize=7, 44 layers                    | 0.0714 | 0.0717 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Source.git-patch) |
+| Nsize=9, 56 layers                    | 0.0694 | 0.0697 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-te4ScgnYMA/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-te4ScgnYMA/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-te4ScgnYMA/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-te4ScgnYMA/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-te4ScgnYMA/Source.git-patch) |
+| Nsize=18, 110 layers, fancy policy¹   | 0.0673 | 0.0661² | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601142006-5T5D1DO3VP/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601142006-5T5D1DO3VP/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601142006-5T5D1DO3VP/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601142006-5T5D1DO3VP/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601142006-5T5D1DO3VP/Source.git-patch) |
 
 We can reproduce the results from the paper to typically within 0.5%.
 In all cases except for the 32-layer network, we achieve very slightly
@@ -168,12 +169,12 @@ Results:
 - Removing the ReLU layer at the end of each building block appears to
   give a small improvement (~0.6%)
 
-| Architecture                        | Test error |
-|:-----------------------------------:|:----------:|
-| ReLU, BN before add (ORIG PAPER reimplementation)    |  0.0697 |
-| No ReLU, BN before add              |  0.0632 |
-| ReLU, BN after add                  |  0.1356 |
-| No ReLU, BN after add               |  0.1230 |
+| Architecture                        | Test error | Artifacts |
+|:-----------------------------------:|:----------:|:---:|
+| ReLU, BN before add (ORIG PAPER reimplementation)    |  0.0697 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181920-jmOtpiNPQa/Source.git-patch) |
+| No ReLU, BN before add              |  0.0632 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Source.git-patch) |
+| ReLU, BN after add                  |  0.1356 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Source.git-patch) |
+| No ReLU, BN after add               |  0.1230 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Source.git-patch) |
 
 
 Alternate training strategies (RMSPROP, Adagrad, Adadelta)
