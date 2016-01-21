@@ -20,6 +20,7 @@ Table of contents
 
 Changes
 -------
+- 2016-01-21: Completed the 'alternate solver' experiments on deep networks. These ones take quite a long time.
 - 2016-01-19:
   - **New results**: Re-ran the 'alternate building block' results on deeper networks. They have more of an effect.
   - **Added a table of contents** to avoid getting lost.
