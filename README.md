@@ -14,7 +14,8 @@ Table of contents
 - [CIFAR: Effect of model size](#cifar-effect-of-model-size)
 - [CIFAR: Effect of model architecture on shallow networks](#cifar-effect-of-model-architecture)
   - [...on deep networks](#cifar-effect-of-model-architecture-on-deep-networks)
-- [CIFAR: Effect of alternate solvers (RMSprop, Adagrad, Adadelta)](#alternate-training-strategies-rmsprop-adagrad-adadelta)
+- [CIFAR: Effect of alternate solvers (RMSprop, Adagrad, Adadelta)](#cifar-alternate-training-strategies-rmsprop-adagrad-adadelta)
+  - [...on deep networks](#cifar-alternate-training-strategies-on-deep-networks)
 - [CIFAR: Effect of batch normalization momentum](#effect-of-batch-norm-momentum)
 
 Changes
@@ -177,8 +178,8 @@ Results:
 | No ReLU, BN after add               |  0.1230 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Source.git-patch) |
 
 
-Alternate training strategies (RMSPROP, Adagrad, Adadelta)
-----------------------------------------------------------
+CIFAR: Alternate training strategies (RMSPROP, Adagrad, Adadelta)
+-----------------------------------------------------------------
 
 Can we improve on the basic SGD update rule with Nesterov momentum?
 This experiment aims to find out. Common wisdom suggests that
@@ -212,6 +213,31 @@ convergence.
 See
 [Andrej Karpathy's CS231N notes](https://cs231n.github.io/neural-networks-3/#update)
 for more details on each of these learning strategies.
+
+CIFAR: Alternate training strategies on deep networks
+-----------------------------------------------------
+
+Deeper networks are more prone to overfitting. Unlike the earlier
+experiments, all of these models (except Adagrad with a learning rate
+of 1e-3) achieve a loss under 0.1, but test error varies quite wildly.
+Once again, using vanilla SGD with Nesterov momentum achieves the
+lowest error.
+
+![Training loss](http://i.imgur.com/ZvMfLtk.png)
+
+![Testing error](http://i.imgur.com/B8PMIQw.png)
+
+|  | Testing error |
+|--|--|
+| Nsize=18, Original paper: Nesterov, 1e-1  | 0.0697 |
+| Nsize=18, RMSprop, 1e-4                   | 0.1482 |
+| Nsize=18, RMSprop, 1e-3                   | 0.0821 |
+| Nsize=18, RMSprop, 1e-2                   | 0.0768 |
+| Nsize=18, RMSprop, 1e-1                   | 0.1098 |
+| Nsize=18, Adadelta                        | 0.0888 |
+| Nsize=18, Adagrad, 1e-3                   | 0.3022 |
+| Nsize=18, Adagrad, 1e-2                   | 0.1321 |
+| Nsize=18, Adagrad, 1e-1                   | 0.1145 |
 
 Effect of batch norm momentum
 -----------------------------
