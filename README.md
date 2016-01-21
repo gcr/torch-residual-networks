@@ -62,7 +62,7 @@ learning rate of 0.1 and reduce it to 0.01 at 80 epochs and then to
 ![Test error curve](http://i.imgur.com/lt2D5cA.png)
 
 | Model                                 | My Test Error | Reference Test Error from Tab. 6 | Artifacts |
-|--|--|--|--|
+|----|----|----|----|
 | Nsize=3, 20 layers                    | 0.0829 | 0.0875 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-AnY56THQt7/Source.git-patch) |
 | Nsize=5, 32 layers                    | 0.0763 | 0.0751 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141709-rewkex7oPJ/Source.git-patch) |
 | Nsize=7, 44 layers                    | 0.0714 | 0.0717 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601141710-HxIw7lGPyu/Source.git-patch) |
@@ -228,8 +228,8 @@ lowest error.
 
 ![Testing error](http://i.imgur.com/B8PMIQw.png)
 
-|  | Testing error |
-|--|--|
+| Solver                                    | Testing error |
+|-------------------------------------------|--------|
 | Nsize=18, Original paper: Nesterov, 1e-1  | 0.0697 |
 | Nsize=18, RMSprop, 1e-4                   | 0.1482 |
 | Nsize=18, RMSprop, 1e-3                   | 0.0821 |
