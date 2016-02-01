@@ -183,9 +183,9 @@ Results:
 ImageNet: Effect of model architecture (preliminary)
 ----------------------------------------------------
 [@ducha-aiki is performing preliminary experiments on imagenet.](https://github.com/gcr/torch-residual-networks/issues/5)
-On Imagenet, @ducha-aiki found the opposite effect from the CIFAR
-results above. Putting batch normalization after the residual layer
-seems to improve results on Imagenet.
+For ordinary Caffe networks, @ducha-aiki found that putting batch
+normalization after the ReLU layer may provide a small benefit
+compared to putting it before.
 
 > Second, results on CIFAR-10 often contradicts results on ImageNet. I.e., leaky ReLU > ReLU on CIFAR, but worse on ImageNet.
 
