@@ -187,6 +187,8 @@ On Imagenet, @ducha-aiki found the opposite effect from the CIFAR results above:
 
 > Second, results on CIFAR-10 often contradicts results on ImageNet. I.e., leaky ReLU > ReLU on CIFAR, but worse on ImageNet.
 
+@ducha-aiki's more detailed results here: https://github.com/ducha-aiki/caffenet-benchmark/blob/master/batchnorm.md
+
 
 CIFAR: Alternate training strategies (RMSPROP, Adagrad, Adadelta)
 -----------------------------------------------------------------
