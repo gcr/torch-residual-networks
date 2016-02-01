@@ -183,7 +183,7 @@ Results:
 ImageNet: Effect of model architecture (preliminary)
 ----------------------------------------------------
 [@ducha-aiki is performing preliminary experiments on imagenet.](https://github.com/gcr/torch-residual-networks/issues/5)
-For ordinary Caffe networks, @ducha-aiki found that putting batch
+For ordinary CaffeNet networks, @ducha-aiki found that putting batch
 normalization after the ReLU layer may provide a small benefit
 compared to putting it before.
 
