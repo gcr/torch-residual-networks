@@ -14,12 +14,14 @@ Table of contents
 - [CIFAR: Effect of model size](#cifar-effect-of-model-size)
 - [CIFAR: Effect of model architecture on shallow networks](#cifar-effect-of-model-architecture)
   - [...on deep networks](#cifar-effect-of-model-architecture-on-deep-networks)
+- [Imagenet: Others' preliminary model architecture experiments](#imagenet-effect-of-model-architecture-preliminary)
 - [CIFAR: Effect of alternate solvers (RMSprop, Adagrad, Adadelta)](#cifar-alternate-training-strategies-rmsprop-adagrad-adadelta)
   - [...on deep networks](#cifar-alternate-training-strategies-on-deep-networks)
 - [CIFAR: Effect of batch normalization momentum](#effect-of-batch-norm-momentum)
 
 Changes
 -------
+- 2016-02-01: Added others' preliminary results on ImageNet for the architecture. (I haven't found time to train ImageNet yet)
 - 2016-01-21: Completed the 'alternate solver' experiments on deep networks. These ones take quite a long time.
 - 2016-01-19:
   - **New results**: Re-ran the 'alternate building block' results on deeper networks. They have more of an effect.
@@ -177,6 +179,13 @@ Results:
 | No ReLU, BN before add              |  0.0632 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181924-V2wDg0NKDK/Source.git-patch) |
 | ReLU, BN after add                  |  0.1356 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181922-8VYWhyuTuA/Source.git-patch) |
 | No ReLU, BN after add               |  0.1230 | [Model](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/model.t7), [Loss](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Training%20loss.csv) and [Error](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Testing%20Error.csv) logs, [Source commit](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Source.git-current-commit) + [patch](https://mjw-xi8mledcnyry.s3.amazonaws.com/experiments/201601181923-Qfp5mTA2u9/Source.git-patch) |
+
+ImageNet: Effect of model architecture (preliminary)
+----------------------------------------------------
+[@ducha-aiki is performing preliminary experiments on imagenet.](https://github.com/gcr/torch-residual-networks/issues/5)
+On Imagenet, @ducha-aiki found the opposite effect from the CIFAR results above:
+
+> Second, results on CIFAR-10 often contradicts results on ImageNet. I.e., leaky ReLU > ReLU on CIFAR, but worse on ImageNet.
 
 
 CIFAR: Alternate training strategies (RMSPROP, Adagrad, Adadelta)
