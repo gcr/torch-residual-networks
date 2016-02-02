@@ -74,7 +74,7 @@ if opt.loadFrom == "" then
     for i=1,N do   model = ResidualLayer(16)(model)   end
     ------> 32, 16,16   Second Group
     model = ResidualLayer(16, 32, 2)(model)
-    for i=1,N-1 do   ResidualLayer(32)(model)   end
+    for i=1,N-1 do   model = ResidualLayer(32)(model)   end
     ------> 64, 8,8     Third Group
     model = ResidualLayer(32, 64, 2)(model)
     for i=1,N-1 do   model = ResidualLayer(64)(model)   end
