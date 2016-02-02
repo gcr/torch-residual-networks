@@ -24,7 +24,7 @@ require 'cudnn'
 require 'cunn'
 local nninit = require 'nninit'
 
-function addResidualLayer2(input,  nChannels, nOutChannels, stride)
+function ResidualLayer(nChannels, nOutChannels, stride)
    --[[
 
    Residual layers! Implements option (A) from Section 3.3. The input
@@ -50,46 +50,52 @@ function addResidualLayer2(input,  nChannels, nOutChannels, stride)
    stride = stride or 1
    -- Path 1: Convolution
    -- The first layer does the downsampling and the striding
-   local net = cudnn.SpatialConvolution(nChannels, nOutChannels,
+   local path1 = nn.Sequential()
+   path1:add(cudnn.SpatialConvolution(nChannels, nOutChannels,
                                            3,3, stride,stride, 1,1)
                                            :init('weight', nninit.kaiming, {gain = 'relu'})
-                                           :init('bias', nninit.constant, 0)(input)
-   net = cudnn.SpatialBatchNormalization(nOutChannels)
+                                           :init('bias', nninit.constant, 0))
+   path1:add(cudnn.SpatialBatchNormalization(nOutChannels)
                                             :init('weight', nninit.normal, 1.0, 0.002)
-                                            :init('bias', nninit.constant, 0)(net)
-   net = cudnn.ReLU(true)(net)
-   net = cudnn.SpatialConvolution(nOutChannels, nOutChannels,
+                                            :init('bias', nninit.constant, 0))
+   path1:add(cudnn.ReLU(true))
+   path1:add(cudnn.SpatialConvolution(nOutChannels, nOutChannels,
                                       3,3, 1,1, 1,1)
                                       :init('weight', nninit.kaiming, {gain = 'relu'})
-                                      :init('bias', nninit.constant, 0)(net)
+                                      :init('bias', nninit.constant, 0))
    -- Should we put Batch Normalization here? I think not, because
    -- BN would force the output to have unit variance, which breaks the residual
    -- property of the network.
    -- What about ReLU here? I think maybe not for the same reason. Figure 2
    -- implies that they don't use it here
+   path1:add(cudnn.SpatialBatchNormalization(nOutChannels))
 
    -- Path 2: Identity / skip connection
-   local skip = input
+   local path2 = nn.Sequential()
+   path2:add(nn.Identity())
    if stride > 1 then
        -- optional downsampling
-       skip = nn.SpatialAveragePooling(1, 1, stride,stride)(skip)
+       path2:add(nn.SpatialAveragePooling(1, 1, stride,stride))
    end
    if nOutChannels > nChannels then
        -- optional padding
-       skip = nn.Padding(1, (nOutChannels - nChannels), 3)(skip)
+       path2:add(nn.Padding(1, (nOutChannels - nChannels), 3))
    elseif nOutChannels < nChannels then
        -- optional narrow, ugh.
-       skip = nn.Narrow(2, 1, nOutChannels)(skip)
+       path2:add(nn.Narrow(2, 1, nOutChannels))
        -- NOTE this BREAKS with non-batch inputs!!
    end
 
    -- Add them together
-   net = cudnn.SpatialBatchNormalization(nOutChannels)(net)
-   net = nn.CAddTable(){net, skip}
-   net = cudnn.ReLU(true)(net)
+   local layer = nn.Sequential()
+   local concat = nn.ConcatTable(2)
+   concat:add(path1):add(path2)
+   layer:add(concat)
+   layer:add(nn.CAddTable())
+   layer:add(cudnn.ReLU(true))
    -- ^ don't put a ReLU here! see http://gitxiv.com/comments/7rffyqcPLirEEsmpX
 
-   return net
+   return layer
 end
 
 --[[
