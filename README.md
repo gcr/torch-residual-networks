@@ -281,7 +281,7 @@ None of these effects appear to make a significant difference.
 
 ![Test error curve](http://i.imgur.com/3M1P79N.png)
 
-| Strategy | Accuracy |
+| Strategy | Test Error |
 |----|----|
 | BN, momentum = 1 just for fun      |  0.0863 |
 | BN, momentum = 0.01                |  0.0835 |
