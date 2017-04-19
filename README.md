@@ -57,10 +57,10 @@ iterations on the above graph). Like their paper, we start at a
 learning rate of 0.1 and reduce it to 0.01 at 80 epochs and then to
 0.01 at 160 epochs.
 
-###Training loss
+### Training loss
 ![Training loss curve](http://i.imgur.com/XqKnNX1.png)
 
-###Testing error
+### Testing error
 ![Test error curve](http://i.imgur.com/lt2D5cA.png)
 
 | Model                                 | My Test Error | Reference Test Error from Tab. 6 | Artifacts |
